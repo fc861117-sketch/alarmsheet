@@ -6,7 +6,7 @@ const AUTH_SESSION_KEY = "fire-alarm-authenticated";
 const AUTH_SESSION_USERNAME_KEY = "fire-alarm-session-username";
 const AUTH_SESSION_HASH_KEY = "fire-alarm-session-hash";
 const EXPECTED_GAS_VERSION = "2026-06-19-8";
-const APP_ASSET_VERSION = "20260619-14";
+const APP_ASSET_VERSION = "20260619-15";
 const CLOUD_API_PARTS = [
   "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mv",
   "cy9BS2Z5Y2J6VGFzRTVvNXIwQ2R3ZVRaYkpKVzJ6bldF",
@@ -533,7 +533,7 @@ function renderHandlers() {
     return `
       <div class="manager-item">
         <span>${escapeHtml(name)}${used ? "（已有資料使用）" : ""}</span>
-        <button class="mini-button" data-delete-handler="${escapeHtml(name)}" type="button" ${used ? "disabled" : ""}>刪除</button>
+        <button class="mini-button danger-mini" data-delete-handler="${escapeHtml(name)}" type="button" ${used ? "disabled" : ""}>刪除</button>
       </div>
     `;
   }).join("") || `<div class="empty-state">尚無受理人員</div>`;
@@ -600,7 +600,7 @@ function renderRecords() {
           <div class="row-actions">
             <button class="mini-button" data-edit="${record.id}" type="button">編輯</button>
             <button class="mini-button" data-print="${record.id}" type="button">列印</button>
-            <button class="mini-button" data-delete="${record.id}" type="button">刪除</button>
+            <button class="mini-button danger-mini" data-delete="${record.id}" type="button">刪除</button>
           </div>
         </td>
       </tr>
@@ -879,7 +879,7 @@ async function deleteHandler(name) {
     toast("此人員已有申請資料使用，無法刪除");
     return;
   }
-  if (!confirm(`確定刪除「${name}」？`)) return;
+  if (!confirm(`系統提示：確定刪除受理人員「${name}」？`)) return;
   state.handlers = state.handlers.filter((handler) => handler !== name);
   saveHandlers();
   renderHandlers();
@@ -892,14 +892,14 @@ async function deleteHandler(name) {
 }
 
 function cancelForm() {
-  const ok = confirm("確認是否離開頁面？系統不會保存這筆資料。");
+  const ok = confirm("系統提示：確認是否離開頁面？系統不會保存這筆資料。");
   if (!ok) return;
   els.recordDialog.close();
 }
 
 async function deleteRecord(id) {
   const record = state.records.find((item) => item.id === id);
-  if (!record || !confirm(`確定刪除「${record.name}」這筆資料？`)) return;
+  if (!record || !confirm(`系統提示：確定刪除「${record.name}」這筆資料？`)) return;
   state.records = state.records.filter((item) => item.id !== id);
   saveRecords();
   render();

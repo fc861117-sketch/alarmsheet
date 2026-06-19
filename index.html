@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>湖口分隊住警器紀錄系統</title>
-    <link rel="stylesheet" href="styles.css?v=20260619-14">
+    <link rel="stylesheet" href="styles.css?v=20260619-15">
   </head>
   <body class="auth-locked">
     <section class="auth-screen" id="authScreen">
@@ -157,7 +157,7 @@
                 <span>申請人</span>
                 <select id="printRecord"></select>
               </label>
-              <button class="primary-button" id="printBtn" type="button">列印</button>
+              <button class="print-button" id="printBtn" type="button">列印</button>
             </div>
           </div>
 
@@ -218,7 +218,7 @@
       <form method="dialog" id="recordForm">
         <div class="dialog-heading">
           <h3 id="dialogTitle">新增申請資料</h3>
-          <button class="icon-button" data-cancel-form type="button" aria-label="關閉">×</button>
+          <button class="icon-button danger-icon" data-cancel-form type="button" aria-label="關閉">×</button>
         </div>
 
         <input id="recordId" type="hidden">
@@ -274,8 +274,8 @@
         </div>
 
         <div class="dialog-actions">
-          <button class="ghost-button" data-cancel-form type="button">取消</button>
-          <button class="ghost-button" id="printCurrentRecordBtn" type="button">列印目前表單</button>
+          <button class="danger-button" data-cancel-form type="button">取消</button>
+          <button class="print-button" id="printCurrentRecordBtn" type="button">列印目前表單</button>
           <button class="primary-button" id="saveRecordBtn" type="button">儲存</button>
         </div>
       </form>
@@ -288,7 +288,7 @@
           <button class="icon-button" id="closeSampleBtn" type="button" aria-label="關閉">×</button>
         </div>
         <div class="sample-actions no-print">
-          <button class="primary-button" id="printSampleBtn" type="button">列印範例</button>
+          <button class="print-button" id="printSampleBtn" type="button">列印範例</button>
         </div>
         <div class="print-sheet" id="samplePrint"></div>
       </div>
@@ -296,6 +296,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="app.js?v=20260619-14"></script>
+    <script src="app.js?v=20260619-15"></script>
   </body>
 </html>
