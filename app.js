@@ -6,6 +6,7 @@ const AUTH_SESSION_KEY = "fire-alarm-authenticated";
 const AUTH_SESSION_USERNAME_KEY = "fire-alarm-session-username";
 const AUTH_SESSION_HASH_KEY = "fire-alarm-session-hash";
 const EXPECTED_GAS_VERSION = "2026-06-19-5";
+const APP_ASSET_VERSION = "20260619-7";
 const CLOUD_API_PARTS = [
   "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mv",
   "cy9BS2Z5Y2J6VGFzRTVvNXIwQ2R3ZVRaYkpKVzJ6bldF",
@@ -40,6 +41,7 @@ const els = {
   authForm: document.querySelector("#authForm"),
   authHint: document.querySelector("#authHint"),
   authStatus: document.querySelector("#authStatus"),
+  authCloudLink: document.querySelector("#authCloudLink"),
   authUsernameInput: document.querySelector("#authUsernameInput"),
   authPasswordInput: document.querySelector("#authPasswordInput"),
   authConfirmWrap: document.querySelector("#authConfirmWrap"),
@@ -105,6 +107,9 @@ const els = {
 if (els.authStatus) {
   els.authStatus.textContent = "正在連線 Google Sheet 雲端資料...";
 }
+if (els.authCloudLink) {
+  els.authCloudLink.href = cloudTestUrl();
+}
 
 const viewTitles = {
   dashboard: "總覽",
@@ -139,12 +144,20 @@ function cloudApiUrl() {
   return atob(CLOUD_API_PARTS.join(""));
 }
 
+function cloudTestUrl() {
+  const url = new URL(cloudApiUrl());
+  url.searchParams.set("action", "meta");
+  url.searchParams.set("callback", "cloudTest");
+  url.searchParams.set("_", `${APP_ASSET_VERSION}-${Date.now()}`);
+  return url.toString();
+}
+
 function cloudGet(action, params = {}) {
   return new Promise((resolve, reject) => {
     const callbackName = `cloudCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const timeout = window.setTimeout(() => {
       cleanup();
-      reject(new Error("雲端連線逾時"));
+      reject(new Error("雲端連線逾時，請確認此裝置可連到 script.google.com"));
     }, 15000);
     const script = document.createElement("script");
 
@@ -166,7 +179,7 @@ function cloudGet(action, params = {}) {
     Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, String(value ?? "")));
     script.onerror = () => {
       cleanup();
-      reject(new Error("雲端連線失敗"));
+      reject(new Error("雲端連線失敗，可能被瀏覽器、網路或內容阻擋功能攔截"));
     };
     script.src = url.toString();
     document.body.appendChild(script);
@@ -208,17 +221,17 @@ async function initializeCloud() {
   } catch (error) {
     state.cloudReady = false;
     state.cloudSetupRequired = false;
-    updateCloudStatus(null);
+    updateCloudStatus(null, error);
     updateAuthMode();
     setAuthenticated(false);
     toast("無法連線雲端資料，請稍後再試");
   }
 }
 
-function updateCloudStatus(meta) {
+function updateCloudStatus(meta, error = null) {
   if (!els.authStatus) return;
   if (!meta) {
-    els.authStatus.textContent = "雲端連線失敗，請確認 Apps Script Web App 部署。";
+    els.authStatus.textContent = `${error?.message || "雲端連線失敗"}。請點下方「開啟雲端測試」確認此裝置是否能連到 GAS。`;
     return;
   }
   const version = meta.version || "未回傳版本";

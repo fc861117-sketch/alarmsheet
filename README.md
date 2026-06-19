@@ -42,6 +42,8 @@
 
 登入畫面會顯示目前連到的 GAS 版本。若顯示「未回傳版本」或不是 `2026-06-19-5`，代表網頁打到的 Web App 仍是舊部署。請在 Apps Script 的「管理部署作業」更新原本那個 Web App 部署；若是建立了新的部署，必須把新的 Web App URL 重新填入 `app.js` 的 `CLOUD_API_PARTS` 後再推送。
 
+若登入畫面顯示「雲端連線失敗」，請點登入畫面的「開啟雲端測試」。正常情況會看到類似 `cloudTest({"ok":true,"hasCredentials":true,"version":"2026-06-19-5"})`。若測試連結也打不開，請在該裝置關閉內容阻擋、廣告阻擋或換一個網路後再試。
+
 Apps Script 的 Script Properties 會使用：
 
 - `sharedUsername`：共用帳號

@@ -66,6 +66,17 @@ body.auth-locked .app-shell {
   line-height: 1.5;
 }
 
+.auth-cloud-link {
+  color: var(--accent-dark);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.auth-cloud-link:hover {
+  text-decoration: underline;
+}
+
 button,
 input,
 select,
