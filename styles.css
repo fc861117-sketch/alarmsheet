@@ -843,6 +843,14 @@ td {
   width: 8%;
 }
 
+.pdf-application-table .col-label-date {
+  width: 11%;
+}
+
+.pdf-application-table .col-main-right {
+  width: 20%;
+}
+
 .vertical-title {
   writing-mode: vertical-rl;
   text-orientation: upright;
@@ -1104,11 +1112,19 @@ td {
   }
 
   .pdf-application-table .col-label-sm {
-    width: 17mm;
+    width: 15mm;
   }
 
   .pdf-application-table .col-sex {
     width: 14mm;
+  }
+
+  .pdf-application-table .col-label-date {
+    width: 23mm;
+  }
+
+  .pdf-application-table .col-main-right {
+    width: 34mm;
   }
 
   .vertical-title {

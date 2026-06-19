@@ -6,7 +6,7 @@ const AUTH_SESSION_KEY = "fire-alarm-authenticated";
 const AUTH_SESSION_USERNAME_KEY = "fire-alarm-session-username";
 const AUTH_SESSION_HASH_KEY = "fire-alarm-session-hash";
 const EXPECTED_GAS_VERSION = "2026-06-19-8";
-const APP_ASSET_VERSION = "20260620-7";
+const APP_ASSET_VERSION = "20260620-8";
 const CLOUD_API_PARTS = [
   "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mv",
   "cy9BS2Z5Y2J6VGFzRTVvNXIwQ2R3ZVRaYkpKVzJ6bldF",
@@ -762,8 +762,8 @@ function singleApplicationFormMarkup(record) {
           <col class="col-main">
           <col class="col-label-sm">
           <col class="col-sex">
-          <col class="col-label-sm">
-          <col class="col-main">
+          <col class="col-label-date">
+          <col class="col-main-right">
         </colgroup>
         <tr>
           <th rowspan="6" class="vertical-title">申請人資料</th>
