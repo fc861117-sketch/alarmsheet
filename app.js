@@ -6,7 +6,7 @@ const AUTH_SESSION_KEY = "fire-alarm-authenticated";
 const AUTH_SESSION_USERNAME_KEY = "fire-alarm-session-username";
 const AUTH_SESSION_HASH_KEY = "fire-alarm-session-hash";
 const EXPECTED_GAS_VERSION = "2026-06-19-8";
-const APP_ASSET_VERSION = "20260619-12";
+const APP_ASSET_VERSION = "20260619-13";
 const CLOUD_API_PARTS = [
   "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mv",
   "cy9BS2Z5Y2J6VGFzRTVvNXIwQ2R3ZVRaYkpKVzJ6bldF",
@@ -494,7 +494,7 @@ function setCheckedValues(name, values) {
 
 function getFilteredRecords() {
   const keyword = normalizeText(els.searchInput.value).toLowerCase();
-  const handler = normalizeText(els.handlerFilter.value).toLowerCase();
+  const handler = normalizeText(els.handlerFilter.value);
 
   return state.records.filter((record) => {
     const haystack = [
@@ -502,7 +502,7 @@ function getFilteredRecords() {
       record.certificateNo, record.handler, record.personTypes.join(" "), record.housingType,
     ].join(" ").toLowerCase();
     return (!keyword || haystack.includes(keyword))
-      && (!handler || record.handler.toLowerCase().includes(handler));
+      && (!handler || record.handler === handler);
   });
 }
 
@@ -516,12 +516,18 @@ function render() {
 
 function renderHandlers() {
   const selected = els.handlerInput.value;
+  const selectedFilter = els.handlerFilter.value;
   const recordHandlers = uniqueNames(state.records.map((record) => record.handler));
   state.handlers = uniqueNames([...state.handlers, ...recordHandlers]);
   els.handlerInput.innerHTML = `<option value="">請選擇</option>${state.handlers
     .map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)
     .join("")}`;
   if (state.handlers.includes(selected)) els.handlerInput.value = selected;
+
+  els.handlerFilter.innerHTML = `<option value="">全部</option>${state.handlers
+    .map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)
+    .join("")}`;
+  if (state.handlers.includes(selectedFilter)) els.handlerFilter.value = selectedFilter;
 
   els.handlerList.innerHTML = state.handlers.map((name) => {
     const used = state.records.some((record) => record.handler === name);
@@ -1189,7 +1195,7 @@ els.searchInput.addEventListener("input", renderRecords);
 els.nationalIdInput.addEventListener("input", () => {
   els.nationalIdInput.value = els.nationalIdInput.value.toUpperCase();
 });
-els.handlerFilter.addEventListener("input", renderRecords);
+els.handlerFilter.addEventListener("change", renderRecords);
 els.printMode.addEventListener("change", renderPrint);
 els.printRecord.addEventListener("change", renderPrint);
 els.printBtn.addEventListener("click", () => {
