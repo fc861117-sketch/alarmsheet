@@ -1,8 +1,8 @@
 // 湖口分隊住警器紀錄系統 Google Apps Script
-// Version: 2026-06-19-6
+// Version: 2026-06-19-7
 // 說明：支援中文欄位、共用帳號登入、Google Sheet 雲端資料同步。
 
-const SCRIPT_VERSION = "2026-06-19-6";
+const SCRIPT_VERSION = "2026-06-19-7";
 const SPREADSHEET_ID = "";
 const APPLICATIONS_SHEET = "Applications";
 const SETTINGS_SHEET = "Settings";
@@ -252,13 +252,28 @@ function ensureSheets() {
   const appSheet = getSheet(APPLICATIONS_SHEET);
   const settingsSheet = getSheet(SETTINGS_SHEET);
   ensureHeaders(appSheet, APPLICATION_HEADERS);
+  formatSheet(appSheet, APPLICATION_HEADERS.length);
   if (settingsSheet.getRange(1, 1).getValue() !== "受理人員") settingsSheet.getRange(1, 1).setValue("受理人員");
+  formatSheet(settingsSheet, 1);
 }
 
 function ensureHeaders(sheet, headers) {
   const current = sheet.getRange(1, 1, 1, headers.length).getValues()[0];
   const needsHeader = headers.some((header, index) => current[index] !== header);
   if (needsHeader) sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+}
+
+function formatSheet(sheet, columnCount) {
+  sheet.setFrozenRows(1);
+  const header = sheet.getRange(1, 1, 1, columnCount);
+  header
+    .setFontWeight("bold")
+    .setBackground("#e7f2ed")
+    .setFontColor("#17201c")
+    .setWrap(false)
+    .setHorizontalAlignment("center");
+  sheet.getDataRange().setVerticalAlignment("middle").setWrap(false);
+  sheet.autoResizeColumns(1, columnCount);
 }
 
 function getSheet(name) {

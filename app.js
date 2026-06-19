@@ -5,8 +5,8 @@ const AUTH_HASH_KEY = "fire-alarm-auth-hash";
 const AUTH_SESSION_KEY = "fire-alarm-authenticated";
 const AUTH_SESSION_USERNAME_KEY = "fire-alarm-session-username";
 const AUTH_SESSION_HASH_KEY = "fire-alarm-session-hash";
-const EXPECTED_GAS_VERSION = "2026-06-19-6";
-const APP_ASSET_VERSION = "20260619-8";
+const EXPECTED_GAS_VERSION = "2026-06-19-7";
+const APP_ASSET_VERSION = "20260619-9";
 const CLOUD_API_PARTS = [
   "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mv",
   "cy9BS2Z5Y2J6VGFzRTVvNXIwQ2R3ZVRaYkpKVzJ6bldF",
@@ -864,7 +864,7 @@ function exportJson() {
 function importJson(file) {
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = () => {
+  reader.onload = async () => {
     try {
       const incoming = migrateRecords(JSON.parse(reader.result));
       const merged = new Map(state.records.map((record) => [record.id, record]));
@@ -872,7 +872,8 @@ function importJson(file) {
       state.records = Array.from(merged.values());
       saveRecords();
       render();
-      toast("備份已匯入");
+      await syncRecordsToCloud(incoming);
+      toast("備份已匯入並同步");
     } catch {
       toast("匯入失敗，請確認 JSON 格式");
     } finally {
