@@ -714,6 +714,9 @@ td {
   color: #000;
   position: relative;
   overflow: hidden;
+  width: 100%;
+  max-width: 190mm;
+  margin: 0 auto;
 }
 
 .sample-watermark::before {
@@ -752,7 +755,7 @@ td {
 .pdf-form-title h3 {
   flex: 1;
   text-align: center;
-  font-size: 24px;
+  font-size: 22px;
   letter-spacing: 0;
 }
 
@@ -790,8 +793,8 @@ td {
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
-  font-size: 18px;
-  line-height: 1.45;
+  font-size: 15px;
+  line-height: 1.28;
 }
 
 .pdf-application-table .col-side {
@@ -822,27 +825,29 @@ td {
 }
 
 .pdf-application-table small {
-  font-size: 13px;
-  line-height: 1.35;
+  font-size: 11px;
+  line-height: 1.2;
 }
 
 .signature-note {
-  height: 96px;
+  height: 74px;
   vertical-align: top;
 }
 
 .option-grid {
-  display: grid;
-  gap: 3px 22px;
+  font-size: inherit;
 }
 
-.option-grid.two-col {
-  grid-template-columns: 1fr 1fr;
+.option-grid span {
+  display: inline-block;
+  width: 48%;
+  margin: 0 0 3px;
+  vertical-align: top;
 }
 
 .footer-cell {
-  height: 56px;
-  font-size: 18px;
+  height: 42px;
+  font-size: 15px;
   vertical-align: top;
 }
 
@@ -940,6 +945,11 @@ td {
   }
 }
 
+@page {
+  size: A4 portrait;
+  margin: 8mm;
+}
+
 @media print {
   body {
     background: #fff;
@@ -972,6 +982,10 @@ td {
   .print-sheet {
     border: 0;
     padding: 0;
+    width: 194mm;
+    max-width: 194mm;
+    margin: 0 auto;
+    overflow: visible;
   }
 
   table {
@@ -983,6 +997,89 @@ td {
   td {
     padding: 6px;
     border: 1px solid #000;
+  }
+
+  .application-page {
+    width: 194mm;
+    max-width: 194mm;
+    margin: 0 auto;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    overflow: visible;
+  }
+
+  .application-form {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .pdf-form-title {
+    margin-bottom: 2mm;
+  }
+
+  .pdf-form-title h3 {
+    font-size: 17pt;
+  }
+
+  .pdf-form-title p {
+    min-width: 42mm;
+    font-size: 11pt;
+  }
+
+  .pdf-application-table {
+    width: 194mm;
+    max-width: 194mm;
+    font-size: 10.2pt;
+    line-height: 1.16;
+    border-width: 1.4px;
+  }
+
+  .pdf-application-table th,
+  .pdf-application-table td {
+    padding: 2.2mm 1.8mm;
+  }
+
+  .pdf-application-table .col-side {
+    width: 7mm;
+  }
+
+  .pdf-application-table .col-label {
+    width: 28mm;
+  }
+
+  .pdf-application-table .col-main {
+    width: 45mm;
+  }
+
+  .pdf-application-table .col-label-sm {
+    width: 15mm;
+  }
+
+  .pdf-application-table .col-sex {
+    width: 15mm;
+  }
+
+  .vertical-title {
+    font-size: 13pt;
+    letter-spacing: 0.15em;
+  }
+
+  .pdf-application-table small {
+    font-size: 8.3pt;
+  }
+
+  .signature-note {
+    height: 23mm;
+  }
+
+  .footer-cell {
+    height: 13mm;
+    font-size: 10.5pt;
+  }
+
+  .option-grid span {
+    width: 49%;
+    margin-bottom: 0.8mm;
   }
 
   body.sample-printing .app-shell {
