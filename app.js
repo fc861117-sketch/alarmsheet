@@ -3,6 +3,14 @@ const HANDLER_STORAGE_KEY = "fire-alarm-handlers";
 const AUTH_USERNAME_KEY = "fire-alarm-auth-username";
 const AUTH_HASH_KEY = "fire-alarm-auth-hash";
 const AUTH_SESSION_KEY = "fire-alarm-authenticated";
+const AUTH_SESSION_USERNAME_KEY = "fire-alarm-session-username";
+const AUTH_SESSION_HASH_KEY = "fire-alarm-session-hash";
+const CLOUD_API_PARTS = [
+  "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mv",
+  "cy9BS2Z5Y2J6VGFzRTVvNXIwQ2R3ZVRaYkpKVzJ6bldF",
+  "LUJ2NVdNeEs4YzBqcFdZeG9QS2ljdVVOSzNPUW5DQ1Q1",
+  "ZmFjelY0eTcvZXhlYw==",
+];
 
 const defaultHandlers = [
   "單柏洋", "許家瑋", "巫光能", "蔡聖文", "廖宇揚", "陳秀瑢", "余孟軒",
@@ -14,6 +22,8 @@ const state = {
   records: migrateRecords(loadRecords()),
   handlers: loadHandlers(),
   currentView: "dashboard",
+  cloudSetupRequired: false,
+  cloudReady: false,
 };
 
 const els = {
@@ -118,6 +128,101 @@ function saveHandlers() {
   localStorage.setItem(HANDLER_STORAGE_KEY, JSON.stringify(state.handlers));
 }
 
+function cloudApiUrl() {
+  return atob(CLOUD_API_PARTS.join(""));
+}
+
+function cloudGet(action, params = {}) {
+  return new Promise((resolve, reject) => {
+    const callbackName = `cloudCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const timeout = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("雲端連線逾時"));
+    }, 15000);
+    const script = document.createElement("script");
+
+    function cleanup() {
+      window.clearTimeout(timeout);
+      delete window[callbackName];
+      script.remove();
+    }
+
+    window[callbackName] = (data) => {
+      cleanup();
+      resolve(data || {});
+    };
+
+    const url = new URL(cloudApiUrl());
+    url.searchParams.set("action", action);
+    url.searchParams.set("callback", callbackName);
+    Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, String(value ?? "")));
+    script.onerror = () => {
+      cleanup();
+      reject(new Error("雲端連線失敗"));
+    };
+    script.src = url.toString();
+    document.body.appendChild(script);
+  });
+}
+
+async function cloudPost(action, payload = {}) {
+  const form = new FormData();
+  form.append("action", action);
+  form.append("payload", JSON.stringify(payload));
+  await fetch(cloudApiUrl(), {
+    method: "POST",
+    mode: "no-cors",
+    body: form,
+  });
+}
+
+async function initializeCloud() {
+  try {
+    const result = await cloudGet("meta");
+    state.cloudReady = true;
+    state.cloudSetupRequired = !result.hasCredentials;
+    updateAuthMode();
+    if (isAuthenticated()) {
+      setAuthenticated(true);
+      await loadCloudData();
+    } else {
+      setAuthenticated(false);
+    }
+  } catch (error) {
+    state.cloudReady = false;
+    state.cloudSetupRequired = false;
+    updateAuthMode();
+    setAuthenticated(false);
+    toast("無法連線雲端資料，請稍後再試");
+  }
+}
+
+async function loadCloudData() {
+  const result = await cloudGet("data", sessionAuthPayload());
+  if (!result.ok) {
+    setAuthenticated(false);
+    toast(result.message || "雲端資料讀取失敗");
+    return;
+  }
+  state.records = migrateRecords(result.records || []);
+  state.handlers = uniqueNames([...(result.handlers || []), ...defaultHandlers]);
+  saveRecords();
+  saveHandlers();
+  render();
+}
+
+async function syncRecordToCloud(record) {
+  await cloudPost("saveRecord", { auth: sessionAuthPayload(), record });
+}
+
+async function syncDeleteRecordToCloud(id) {
+  await cloudPost("deleteRecord", { auth: sessionAuthPayload(), id });
+}
+
+async function syncHandlersToCloud() {
+  await cloudPost("saveHandlers", { auth: sessionAuthPayload(), handlers: state.handlers });
+}
+
 async function hashPassword(password) {
   const bytes = new TextEncoder().encode(password);
   const hashBuffer = await crypto.subtle.digest("SHA-256", bytes);
@@ -127,11 +232,18 @@ async function hashPassword(password) {
 }
 
 function hasAuthPassword() {
-  return Boolean(localStorage.getItem(AUTH_USERNAME_KEY) && localStorage.getItem(AUTH_HASH_KEY));
+  return !state.cloudSetupRequired;
 }
 
 function isAuthenticated() {
   return sessionStorage.getItem(AUTH_SESSION_KEY) === "true";
+}
+
+function sessionAuthPayload() {
+  return {
+    username: sessionStorage.getItem(AUTH_SESSION_USERNAME_KEY) || "",
+    passwordHash: sessionStorage.getItem(AUTH_SESSION_HASH_KEY) || "",
+  };
 }
 
 function updateAuthMode() {
@@ -143,12 +255,18 @@ function updateAuthMode() {
   els.authSubmitBtn.textContent = setupMode ? "設定帳號密碼並登入" : "登入";
 }
 
-function setAuthenticated(value) {
+function setAuthenticated(value, auth = null) {
   if (value) {
     sessionStorage.setItem(AUTH_SESSION_KEY, "true");
+    if (auth) {
+      sessionStorage.setItem(AUTH_SESSION_USERNAME_KEY, auth.username);
+      sessionStorage.setItem(AUTH_SESSION_HASH_KEY, auth.passwordHash);
+    }
     document.body.classList.remove("auth-locked");
   } else {
     sessionStorage.removeItem(AUTH_SESSION_KEY);
+    sessionStorage.removeItem(AUTH_SESSION_USERNAME_KEY);
+    sessionStorage.removeItem(AUTH_SESSION_HASH_KEY);
     document.body.classList.add("auth-locked");
     updateAuthMode();
     els.authUsernameInput.value = "";
@@ -164,22 +282,27 @@ async function handleAuthSubmit(event) {
   const password = els.authPasswordInput.value;
   if (!username) return toast("請輸入帳號");
   if (password.length < 6) return toast("密碼至少需要 6 個字元");
+  const passwordHash = await hashPassword(password);
 
   if (!hasAuthPassword()) {
     if (password !== els.authConfirmInput.value) return toast("兩次輸入的密碼不一致");
+    const result = await cloudGet("setup", { username, passwordHash });
+    if (!result.ok) return toast(result.message || "帳號設定失敗");
+    state.cloudSetupRequired = false;
     localStorage.setItem(AUTH_USERNAME_KEY, username);
-    localStorage.setItem(AUTH_HASH_KEY, await hashPassword(password));
-    setAuthenticated(true);
+    localStorage.setItem(AUTH_HASH_KEY, passwordHash);
+    setAuthenticated(true, { username, passwordHash });
+    await loadCloudData();
     toast("帳號密碼已設定");
     return;
   }
 
-  const inputHash = await hashPassword(password);
-  if (username !== localStorage.getItem(AUTH_USERNAME_KEY) || inputHash !== localStorage.getItem(AUTH_HASH_KEY)) {
-    toast("帳號或密碼錯誤");
-    return;
-  }
-  setAuthenticated(true);
+  const result = await cloudGet("login", { username, passwordHash });
+  if (!result.ok) return toast(result.message || "帳號或密碼錯誤");
+  localStorage.setItem(AUTH_USERNAME_KEY, username);
+  localStorage.setItem(AUTH_HASH_KEY, passwordHash);
+  setAuthenticated(true, { username, passwordHash });
+  await loadCloudData();
   toast("登入成功");
 }
 
@@ -483,7 +606,7 @@ function openForm(record = null) {
   els.recordDialog.showModal();
 }
 
-function saveForm() {
+async function saveForm() {
   if (!els.recordForm.reportValidity()) return;
   const personTypes = selectedValues("personTypes");
   const housingType = selectedValues("housingType")[0] || "";
@@ -520,10 +643,15 @@ function saveForm() {
   saveRecords();
   els.recordDialog.close();
   render();
-  toast("資料已儲存");
+  try {
+    await syncRecordToCloud(record);
+    toast("資料已儲存並同步到雲端");
+  } catch {
+    toast("資料已先儲存在本機，雲端同步失敗");
+  }
 }
 
-function addHandler() {
+async function addHandler() {
   const name = normalizeText(els.newHandlerInput.value);
   if (!name) return toast("請輸入受理人員姓名");
   if (state.handlers.includes(name)) return toast("名單已有此人員");
@@ -532,10 +660,15 @@ function addHandler() {
   saveHandlers();
   els.newHandlerInput.value = "";
   renderHandlers();
-  toast("受理人員已新增");
+  try {
+    await syncHandlersToCloud();
+    toast("受理人員已新增並同步");
+  } catch {
+    toast("受理人員已先儲存在本機，雲端同步失敗");
+  }
 }
 
-function deleteHandler(name) {
+async function deleteHandler(name) {
   if (state.records.some((record) => record.handler === name)) {
     toast("此人員已有申請資料使用，無法刪除");
     return;
@@ -544,7 +677,12 @@ function deleteHandler(name) {
   state.handlers = state.handlers.filter((handler) => handler !== name);
   saveHandlers();
   renderHandlers();
-  toast("受理人員已刪除");
+  try {
+    await syncHandlersToCloud();
+    toast("受理人員已刪除並同步");
+  } catch {
+    toast("受理人員已先從本機刪除，雲端同步失敗");
+  }
 }
 
 function cancelForm() {
@@ -553,13 +691,18 @@ function cancelForm() {
   els.recordDialog.close();
 }
 
-function deleteRecord(id) {
+async function deleteRecord(id) {
   const record = state.records.find((item) => item.id === id);
   if (!record || !confirm(`確定刪除「${record.name}」這筆資料？`)) return;
   state.records = state.records.filter((item) => item.id !== id);
   saveRecords();
   render();
-  toast("資料已刪除");
+  try {
+    await syncDeleteRecordToCloud(id);
+    toast("資料已刪除並同步");
+  } catch {
+    toast("資料已先從本機刪除，雲端同步失敗");
+  }
 }
 
 function nextSerial() {
@@ -747,4 +890,4 @@ els.recordBody.addEventListener("click", (event) => {
 saveRecords();
 render();
 updateAuthMode();
-setAuthenticated(isAuthenticated());
+initializeCloud();

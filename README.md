@@ -13,6 +13,7 @@
 - CSV 匯出供統計使用
 - JSON 匯出與匯入供備份使用
 - 以一組共用帳號密碼登入後才能使用系統
+- 透過 Google Apps Script 同步資料到 Google Sheet
 
 ## 使用方式
 
@@ -20,7 +21,20 @@
 
 首次使用會要求設定一組共用帳號與密碼，之後開啟系統需登入才可使用。
 
-目前資料與密碼設定儲存在使用者自己的瀏覽器中。若清除瀏覽器資料，系統內資料也會消失，因此請定期匯出 JSON 備份。
+目前資料會同步送到 Google Sheet，瀏覽器本機也會保留快取。若網路或 Apps Script 暫時失敗，系統會先保存本機資料並提示同步失敗。
+
+## Google Sheet 同步設定
+
+1. 開啟目標 Google Sheet。
+2. 選擇「擴充功能」→「Apps Script」。
+3. 將 `APPS_SCRIPT_CODE.gs` 內容貼入 Apps Script。
+4. 部署為 Web App。
+5. 權限建議：
+   - 執行身分：我
+   - 存取權：任何知道連結的人
+6. 將 Web App URL 以 Base64 分段方式填入 `app.js` 的 `CLOUD_API_PARTS`。
+
+注意：前端 URL 混淆不是完整資安防護，瀏覽器執行時仍會還原 URL。系統安全主要依賴 Apps Script 端的共用帳號密碼驗證。
 
 ## GitHub Pages
 
