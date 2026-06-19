@@ -6,7 +6,7 @@ const AUTH_SESSION_KEY = "fire-alarm-authenticated";
 const AUTH_SESSION_USERNAME_KEY = "fire-alarm-session-username";
 const AUTH_SESSION_HASH_KEY = "fire-alarm-session-hash";
 const EXPECTED_GAS_VERSION = "2026-06-19-8";
-const APP_ASSET_VERSION = "20260620-2";
+const APP_ASSET_VERSION = "20260620-3";
 const CLOUD_API_PARTS = [
   "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mv",
   "cy9BS2Z5Y2J6VGFzRTVvNXIwQ2R3ZVRaYkpKVzJ6bldF",
@@ -937,8 +937,11 @@ async function deleteRecord(id) {
 
 function nextSerial() {
   const date = todayString().replaceAll("-", "");
-  const count = state.records.filter((record) => record.serial?.startsWith(date)).length + 1;
-  return `${date}-${count}`;
+  const nextNumber = state.records
+    .map((record) => String(record.serial || "").match(new RegExp(`^${date}-(\\d+)$`)))
+    .filter(Boolean)
+    .reduce((max, match) => Math.max(max, Number(match[1])), 0) + 1;
+  return `${date}-${nextNumber}`;
 }
 
 function setView(view) {
