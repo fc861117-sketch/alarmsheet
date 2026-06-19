@@ -473,24 +473,6 @@ td {
   opacity: 0.45;
 }
 
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  border-radius: 999px;
-  padding: 0 10px;
-  font-weight: 700;
-  font-size: 13px;
-  background: #edf4f1;
-  color: var(--accent-dark);
-  white-space: nowrap;
-}
-
-.status-pill.unsigned {
-  background: #eef1f5;
-  color: #53606b;
-}
-
 .recent-list {
   display: grid;
   gap: 10px;
@@ -540,6 +522,21 @@ td {
 .signature-table th,
 .signature-table td {
   height: 48px;
+}
+
+.full-list-table {
+  font-size: 11px;
+}
+
+.full-list-table th,
+.full-list-table td {
+  height: auto;
+  padding: 5px;
+  vertical-align: top;
+}
+
+.full-list-table td {
+  word-break: break-word;
 }
 
 .record-dialog {

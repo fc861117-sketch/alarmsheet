@@ -1,8 +1,8 @@
 // 湖口分隊住警器紀錄系統 Google Apps Script
-// Version: 2026-06-19-7
+// Version: 2026-06-19-8
 // 說明：支援中文欄位、共用帳號登入、Google Sheet 雲端資料同步。
 
-const SCRIPT_VERSION = "2026-06-19-7";
+const SCRIPT_VERSION = "2026-06-19-8";
 const SPREADSHEET_ID = "";
 const APPLICATIONS_SHEET = "Applications";
 const SETTINGS_SHEET = "Settings";
@@ -26,7 +26,6 @@ const APPLICATION_FIELDS = [
   "housingType",
   "certificateNo",
   "handler",
-  "status",
   "note",
   "updatedAt",
 ];
@@ -48,7 +47,6 @@ const APPLICATION_HEADERS = [
   "住宅類別",
   "個認號碼",
   "受理人員",
-  "狀態",
   "備註",
   "更新時間",
 ];
@@ -251,10 +249,19 @@ function readHandlers() {
 function ensureSheets() {
   const appSheet = getSheet(APPLICATIONS_SHEET);
   const settingsSheet = getSheet(SETTINGS_SHEET);
+  removeLegacyStatusColumn(appSheet);
   ensureHeaders(appSheet, APPLICATION_HEADERS);
   formatSheet(appSheet, APPLICATION_HEADERS.length);
   if (settingsSheet.getRange(1, 1).getValue() !== "受理人員") settingsSheet.getRange(1, 1).setValue("受理人員");
   formatSheet(settingsSheet, 1);
+}
+
+function removeLegacyStatusColumn(sheet) {
+  const lastColumn = sheet.getLastColumn();
+  if (!lastColumn) return;
+  const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+  const statusIndex = headers.indexOf("狀態");
+  if (statusIndex >= 0) sheet.deleteColumn(statusIndex + 1);
 }
 
 function ensureHeaders(sheet, headers) {

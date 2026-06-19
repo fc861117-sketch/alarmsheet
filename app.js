@@ -5,8 +5,8 @@ const AUTH_HASH_KEY = "fire-alarm-auth-hash";
 const AUTH_SESSION_KEY = "fire-alarm-authenticated";
 const AUTH_SESSION_USERNAME_KEY = "fire-alarm-session-username";
 const AUTH_SESSION_HASH_KEY = "fire-alarm-session-hash";
-const EXPECTED_GAS_VERSION = "2026-06-19-7";
-const APP_ASSET_VERSION = "20260619-9";
+const EXPECTED_GAS_VERSION = "2026-06-19-8";
+const APP_ASSET_VERSION = "20260619-10";
 const CLOUD_API_PARTS = [
   "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mv",
   "cy9BS2Z5Y2J6VGFzRTVvNXIwQ2R3ZVRaYkpKVzJ6bldF",
@@ -67,23 +67,19 @@ const els = {
   receiveMethodInput: document.querySelector("#receiveMethodInput"),
   installLocationInput: document.querySelector("#installLocationInput"),
   handlerInput: document.querySelector("#handlerInput"),
-  recordStatusInput: document.querySelector("#recordStatusInput"),
   noteInput: document.querySelector("#noteInput"),
   saveRecordBtn: document.querySelector("#saveRecordBtn"),
   statHouseholds: document.querySelector("#statHouseholds"),
   statPickup: document.querySelector("#statPickup"),
   statInstall: document.querySelector("#statInstall"),
-  statSigned: document.querySelector("#statSigned"),
   summaryBody: document.querySelector("#summaryBody"),
   recentList: document.querySelector("#recentList"),
   lastSaved: document.querySelector("#lastSaved"),
   searchInput: document.querySelector("#searchInput"),
-  statusFilter: document.querySelector("#statusFilter"),
   handlerFilter: document.querySelector("#handlerFilter"),
   recordBody: document.querySelector("#recordBody"),
   printMode: document.querySelector("#printMode"),
   printRecord: document.querySelector("#printRecord"),
-  printStatus: document.querySelector("#printStatus"),
   agencyInput: document.querySelector("#agencyInput"),
   printBtn: document.querySelector("#printBtn"),
   applicationPrint: document.querySelector("#applicationPrint"),
@@ -439,7 +435,7 @@ function migrateRecords(records) {
     housingType: record.housingType || "未設火災警報設備之住宅",
     certificateNo: record.certificateNo || record.certificate || "",
     handler: record.handler || "",
-    status: record.status === "待補件" ? "未簽收" : (record.status || "未簽收"),
+    status: "",
     note: record.note || "",
     updatedAt: record.updatedAt || new Date().toISOString(),
   }));
@@ -496,7 +492,6 @@ function setCheckedValues(name, values) {
 
 function getFilteredRecords() {
   const keyword = normalizeText(els.searchInput.value).toLowerCase();
-  const status = els.statusFilter.value;
   const handler = normalizeText(els.handlerFilter.value).toLowerCase();
 
   return state.records.filter((record) => {
@@ -505,7 +500,6 @@ function getFilteredRecords() {
       record.certificateNo, record.handler, record.personTypes.join(" "), record.housingType,
     ].join(" ").toLowerCase();
     return (!keyword || haystack.includes(keyword))
-      && (status === "all" || record.status === status)
       && (!handler || record.handler.toLowerCase().includes(handler));
   });
 }
@@ -541,21 +535,18 @@ function renderHandlers() {
 function renderDashboard() {
   const pickup = state.records.filter((record) => record.receiveMethod === "自行領取").length;
   const install = state.records.filter((record) => record.receiveMethod === "到府安裝").length;
-  const signed = state.records.filter((record) => record.status === "已簽收").length;
 
   els.statHouseholds.textContent = state.records.length;
   els.statPickup.textContent = pickup;
   els.statInstall.textContent = install;
-  els.statSigned.textContent = signed;
 
   const groups = new Map();
   state.records.forEach((record) => {
     const key = record.housingType || "未分類";
-    const current = groups.get(key) || { housingType: key, households: 0, pickup: 0, install: 0, signed: 0 };
+    const current = groups.get(key) || { housingType: key, households: 0, pickup: 0, install: 0 };
     current.households += 1;
     current.pickup += record.receiveMethod === "自行領取" ? 1 : 0;
     current.install += record.receiveMethod === "到府安裝" ? 1 : 0;
-    current.signed += record.status === "已簽收" ? 1 : 0;
     groups.set(key, current);
   });
 
@@ -567,9 +558,8 @@ function renderDashboard() {
         <td>${item.households}</td>
         <td>${item.pickup}</td>
         <td>${item.install}</td>
-        <td>${item.signed}</td>
       </tr>
-    `).join("") || `<tr><td class="empty-state" colspan="5">尚無申請資料</td></tr>`;
+    `).join("") || `<tr><td class="empty-state" colspan="4">尚無申請資料</td></tr>`;
 
   const recent = [...state.records].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 5);
   els.recentList.innerHTML = recent.length
@@ -599,7 +589,6 @@ function renderRecords() {
         <td>${escapeHtml(methodWithLocation(record))}</td>
         <td>${escapeHtml(record.personTypes.join("、") || "未選")}</td>
         <td>${escapeHtml(record.housingType)}</td>
-        <td>${statusPill(record.status)}</td>
         <td class="no-print">
           <div class="row-actions">
             <button class="mini-button" data-edit="${record.id}" type="button">編輯</button>
@@ -609,7 +598,7 @@ function renderRecords() {
         </td>
       </tr>
     `).join("")
-    : `<tr><td class="empty-state" colspan="10">沒有符合條件的資料</td></tr>`;
+    : `<tr><td class="empty-state" colspan="9">沒有符合條件的資料</td></tr>`;
 }
 
 function renderPrintSelectors() {
@@ -644,7 +633,7 @@ function applicationFormMarkup(record, options = {}) {
     <div class="application-form${sampleClass}">
       <div class="form-title">
         <h3>新竹縣政府補助安裝住宅用火災警報器申請表</h3>
-        <p>${escapeHtml(formatDate(record.date))}</p>
+        <p>領取日期：${escapeHtml(formatDate(record.date))}</p>
       </div>
       <table class="application-table">
         <tr><th rowspan="7">申請人資料</th><th>姓名</th><td>${escapeHtml(record.name)}</td><th>性別</th><td>${checkPair(record.gender, "男", "女")}</td><th>出生年月日</th><td>${escapeHtml(record.birth)}</td></tr>
@@ -661,9 +650,7 @@ function applicationFormMarkup(record, options = {}) {
 }
 
 function renderListPrint() {
-  const status = els.printStatus.value;
   const records = state.records
-    .filter((record) => status === "all" || record.status === status)
     .sort((a, b) => (a.serial || a.name).localeCompare(b.serial || b.name, "zh-Hant"));
 
   els.listPrint.innerHTML = `
@@ -674,31 +661,51 @@ function renderListPrint() {
       </div>
       <p>列印日期：${new Date().toLocaleDateString("zh-TW")}</p>
     </div>
-    <table class="signature-table">
+    <table class="signature-table full-list-table">
       <thead>
-        <tr><th>序號</th><th>姓名</th><th>電話</th><th>地址</th><th>領取方式</th><th>個認號碼</th><th>簽名</th><th>備註</th></tr>
+        <tr>
+          <th>領取日期</th>
+          <th>序號</th>
+          <th>姓名</th>
+          <th>性別</th>
+          <th>出生年月日</th>
+          <th>身分證字號</th>
+          <th>聯絡電話</th>
+          <th>完整地址</th>
+          <th>場所狀況</th>
+          <th>領取方式</th>
+          <th>安裝位置</th>
+          <th>人員類別</th>
+          <th>住宅類別</th>
+          <th>個認號碼</th>
+          <th>受理人員</th>
+          <th>備註</th>
+        </tr>
       </thead>
       <tbody>
         ${records.length ? records.map((record, index) => `
           <tr>
+            <td>${escapeHtml(formatDate(record.date))}</td>
             <td>${escapeHtml(record.serial || String(index + 1))}</td>
             <td>${escapeHtml(record.name)}</td>
+            <td>${escapeHtml(record.gender)}</td>
+            <td>${escapeHtml(record.birth)}</td>
+            <td>${escapeHtml(record.nationalId)}</td>
             <td>${escapeHtml(record.phone)}</td>
             <td>${escapeHtml(record.address)}</td>
-            <td>${escapeHtml(methodWithLocation(record))}</td>
+            <td>${escapeHtml(record.homeStatus)}</td>
+            <td>${escapeHtml(record.receiveMethod)}</td>
+            <td>${escapeHtml(record.installLocation)}</td>
+            <td>${escapeHtml(record.personTypes.join("、"))}</td>
+            <td>${escapeHtml(record.housingType)}</td>
             <td>${escapeHtml(record.certificateNo)}</td>
-            <td></td>
+            <td>${escapeHtml(record.handler)}</td>
             <td>${escapeHtml(record.note)}</td>
           </tr>
-        `).join("") : `<tr><td class="empty-state" colspan="8">沒有可列印資料</td></tr>`}
+        `).join("") : `<tr><td class="empty-state" colspan="16">沒有可列印資料</td></tr>`}
       </tbody>
     </table>
   `;
-}
-
-function statusPill(status) {
-  const className = status === "未簽收" ? "unsigned" : "";
-  return `<span class="status-pill ${className}">${escapeHtml(status)}</span>`;
 }
 
 function methodWithLocation(record) {
@@ -730,7 +737,6 @@ function openForm(record = null) {
   els.receiveMethodInput.value = record?.receiveMethod || "自行領取";
   els.installLocationInput.value = record?.installLocation || "";
   els.handlerInput.value = record?.handler || "";
-  els.recordStatusInput.value = record?.status || "未簽收";
   els.noteInput.value = record?.note || "";
   setCheckedValues("personTypes", record?.personTypes || []);
   setCheckedValues("housingType", record?.housingType ? [record.housingType] : []);
@@ -762,7 +768,7 @@ async function saveForm() {
     receiveMethod: els.receiveMethodInput.value,
     installLocation: normalizeText(els.installLocationInput.value),
     handler: normalizeText(els.handlerInput.value),
-    status: els.recordStatusInput.value,
+    status: "",
     personTypes,
     housingType,
     note: normalizeText(els.noteInput.value),
@@ -853,11 +859,11 @@ function setView(view) {
 }
 
 function exportCsv() {
-  const headers = ["序號", "申請人姓名", "申請人電話", "出生年月日", "申請人身分證字號", "申請人地址", "場所狀況", "領取方式/位置", "人員類別", "住宅類別", "個認號碼", "受理人員", "狀態", "備註"];
+  const headers = ["領取日期", "序號", "申請人姓名", "性別", "出生年月日", "申請人身分證字號", "申請人電話", "申請人地址", "場所狀況", "領取方式", "安裝位置", "人員類別", "住宅類別", "個認號碼", "受理人員", "備註"];
   const rows = state.records.map((record) => [
-    record.serial, record.name, record.phone, record.birth, record.nationalId, record.address,
-    record.homeStatus, methodWithLocation(record), record.personTypes.join("、"), record.housingType,
-    record.certificateNo, record.handler, record.status, record.note,
+    record.date, record.serial, record.name, record.gender, record.birth, record.nationalId, record.phone, record.address,
+    record.homeStatus, record.receiveMethod, record.installLocation, record.personTypes.join("、"), record.housingType,
+    record.certificateNo, record.handler, record.note,
   ]);
   downloadFile(`住警器申請清冊_${todayString()}.csv`, toCsv([headers, ...rows]), "text/csv;charset=utf-8");
 }
@@ -971,7 +977,7 @@ function legacyRowToRecord(headers, row) {
     housingType: get("住宅類別"),
     certificateNo: get("個認號碼", "個認編號") || "CFS",
     handler: get("受理人員"),
-    status: get("狀態") || "未簽收",
+    status: "",
     note: get("備註"),
     updatedAt: now,
   };
@@ -1031,10 +1037,10 @@ function parseCsv(text) {
 }
 
 function copySummary() {
-  const lines = [["住宅類別", "戶數", "自行領取", "到府安裝", "已簽收"]];
+  const lines = [["住宅類別", "戶數", "自行領取", "到府安裝"]];
   Array.from(els.summaryBody.querySelectorAll("tr")).forEach((row) => {
     const cells = Array.from(row.children).map((cell) => cell.textContent.trim());
-    if (cells.length === 5 && !cells[0].includes("尚無")) lines.push(cells);
+    if (cells.length === 4 && !cells[0].includes("尚無")) lines.push(cells);
   });
   navigator.clipboard.writeText(lines.map((row) => row.join("\t")).join("\n"));
   toast("彙整已複製");
@@ -1058,7 +1064,7 @@ function seedRecords() {
     housingType: "未設火災警報設備之住宅",
     certificateNo: "CFS0000000000",
     handler: state.handlers[0] || "受理人員",
-    status: "未簽收",
+    status: "",
     note: "",
     updatedAt: new Date().toISOString(),
   };
@@ -1120,11 +1126,9 @@ els.searchInput.addEventListener("input", renderRecords);
 els.nationalIdInput.addEventListener("input", () => {
   els.nationalIdInput.value = els.nationalIdInput.value.toUpperCase();
 });
-els.statusFilter.addEventListener("change", renderRecords);
 els.handlerFilter.addEventListener("input", renderRecords);
 els.printMode.addEventListener("change", renderPrint);
 els.printRecord.addEventListener("change", renderPrint);
-els.printStatus.addEventListener("change", renderPrint);
 els.agencyInput.addEventListener("input", renderPrint);
 els.printBtn.addEventListener("click", () => {
   renderPrint();

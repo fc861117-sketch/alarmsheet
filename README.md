@@ -39,18 +39,18 @@
 
 注意：前端 URL 混淆不是完整資安防護，瀏覽器執行時仍會還原 URL。系統安全主要依賴 Apps Script 端的共用帳號密碼驗證。
 
-若其他裝置無法用同一組帳號密碼登入，請確認 Apps Script 已貼上最新版 `APPS_SCRIPT_CODE.gs`，並且已重新部署 Web App。最新版檔案上方會顯示 `Version: 2026-06-19-7`。
+若其他裝置無法用同一組帳號密碼登入，請確認 Apps Script 已貼上最新版 `APPS_SCRIPT_CODE.gs`，並且已重新部署 Web App。最新版檔案上方會顯示 `Version: 2026-06-19-8`。
 
-登入畫面會顯示目前連到的 GAS 版本。若顯示「未回傳版本」或不是 `2026-06-19-7`，代表網頁打到的 Web App 仍是舊部署。請在 Apps Script 的「管理部署作業」更新原本那個 Web App 部署；若是建立了新的部署，必須把新的 Web App URL 重新填入 `app.js` 的 `CLOUD_API_PARTS` 後再推送。
+登入畫面會顯示目前連到的 GAS 版本。若顯示「未回傳版本」或不是 `2026-06-19-8`，代表網頁打到的 Web App 仍是舊部署。請在 Apps Script 的「管理部署作業」更新原本那個 Web App 部署；若是建立了新的部署，必須把新的 Web App URL 重新填入 `app.js` 的 `CLOUD_API_PARTS` 後再推送。
 
-若登入畫面顯示「雲端連線失敗」，請點登入畫面的「開啟雲端測試」。正常情況會看到類似 `cloudTest({"ok":true,"hasCredentials":true,"version":"2026-06-19-7"})`。若測試連結也打不開，請在該裝置關閉內容阻擋、廣告阻擋或換一個網路後再試。
+若登入畫面顯示「雲端連線失敗」，請點登入畫面的「開啟雲端測試」。正常情況會看到類似 `cloudTest({"ok":true,"hasCredentials":true,"version":"2026-06-19-8"})`。若測試連結也打不開，請在該裝置關閉內容阻擋、廣告阻擋或換一個網路後再試。
 
 Apps Script 的 Script Properties 會使用：
 
 - `sharedUsername`：共用帳號
 - `sharedPasswordHash`：共用密碼的 SHA-256 雜湊值
 
-若 `sharedPasswordHash` 不小心填成一般明碼密碼，`Version: 2026-06-19-7` 會在網站讀取 GAS 設定時自動轉成雜湊值，不需要手動計算。
+若 `sharedPasswordHash` 不小心填成一般明碼密碼，`Version: 2026-06-19-8` 會在網站讀取 GAS 設定時自動轉成雜湊值，不需要手動計算。
 
 若帳號是在早期本機版設定，請先用原本那台裝置開啟最新版網站一次。系統會自動把本機帳號同步到 GAS，之後其他裝置即可用同一組登入。
 
@@ -58,7 +58,7 @@ Apps Script 的 Script Properties 會使用：
 
 ## 匯入舊 Excel 清單
 
-1. 先確認 Apps Script 已更新到 `Version: 2026-06-19-7` 並重新部署。
+1. 先確認 Apps Script 已更新到 `Version: 2026-06-19-8` 並重新部署。
 2. 登入網站後進入「設定」。
 3. 在「匯入舊 Excel 清單」選擇原本的 `.xlsm` 檔。
 4. 系統會讀取 `3.資料彙整` 工作表，顯示找到的筆數。
