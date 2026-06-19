@@ -6,7 +6,28 @@
     <title>湖口分隊住警器紀錄系統</title>
     <link rel="stylesheet" href="styles.css">
   </head>
-  <body>
+  <body class="auth-locked">
+    <section class="auth-screen" id="authScreen">
+      <form class="auth-card" id="authForm">
+        <div class="brand auth-brand">
+          <div class="brand-mark">警</div>
+          <div>
+            <h1>湖口分隊住警器紀錄系統</h1>
+            <p id="authHint">請登入後使用系統。</p>
+          </div>
+        </div>
+        <label>
+          <span>系統密碼</span>
+          <input id="authPasswordInput" type="password" autocomplete="current-password" required>
+        </label>
+        <label id="authConfirmWrap">
+          <span>再次輸入密碼</span>
+          <input id="authConfirmInput" type="password" autocomplete="new-password">
+        </label>
+        <button class="primary-button" id="authSubmitBtn" type="submit">登入</button>
+      </form>
+    </section>
+
     <div class="app-shell">
       <aside class="sidebar">
         <div class="brand">
@@ -27,6 +48,7 @@
         <div class="sidebar-note">
           <strong>防誤改設計</strong>
           <span>承辦人只填表單欄位，彙整與列印格式由系統產生。</span>
+          <button class="ghost-button" id="logoutBtn" type="button">登出</button>
         </div>
       </aside>
 

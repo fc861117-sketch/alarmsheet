@@ -1,5 +1,7 @@
 const STORAGE_KEY = "fire-alarm-application-records";
 const HANDLER_STORAGE_KEY = "fire-alarm-handlers";
+const AUTH_HASH_KEY = "fire-alarm-auth-hash";
+const AUTH_SESSION_KEY = "fire-alarm-authenticated";
 
 const defaultHandlers = [
   "單柏洋", "許家瑋", "巫光能", "蔡聖文", "廖宇揚", "陳秀瑢", "余孟軒",
@@ -21,6 +23,14 @@ const els = {
     print: document.querySelector("#printView"),
     settings: document.querySelector("#settingsView"),
   },
+  authScreen: document.querySelector("#authScreen"),
+  authForm: document.querySelector("#authForm"),
+  authHint: document.querySelector("#authHint"),
+  authPasswordInput: document.querySelector("#authPasswordInput"),
+  authConfirmWrap: document.querySelector("#authConfirmWrap"),
+  authConfirmInput: document.querySelector("#authConfirmInput"),
+  authSubmitBtn: document.querySelector("#authSubmitBtn"),
+  logoutBtn: document.querySelector("#logoutBtn"),
   viewTitle: document.querySelector("#viewTitle"),
   openFormBtn: document.querySelector("#openFormBtn"),
   recordDialog: document.querySelector("#recordDialog"),
@@ -104,6 +114,67 @@ function loadHandlers() {
 
 function saveHandlers() {
   localStorage.setItem(HANDLER_STORAGE_KEY, JSON.stringify(state.handlers));
+}
+
+async function hashPassword(password) {
+  const bytes = new TextEncoder().encode(password);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function hasAuthPassword() {
+  return Boolean(localStorage.getItem(AUTH_HASH_KEY));
+}
+
+function isAuthenticated() {
+  return sessionStorage.getItem(AUTH_SESSION_KEY) === "true";
+}
+
+function updateAuthMode() {
+  const setupMode = !hasAuthPassword();
+  els.authHint.textContent = setupMode ? "首次使用請先設定系統密碼。" : "請登入後使用系統。";
+  els.authConfirmWrap.hidden = !setupMode;
+  els.authConfirmInput.required = setupMode;
+  els.authPasswordInput.autocomplete = setupMode ? "new-password" : "current-password";
+  els.authSubmitBtn.textContent = setupMode ? "設定密碼並登入" : "登入";
+}
+
+function setAuthenticated(value) {
+  if (value) {
+    sessionStorage.setItem(AUTH_SESSION_KEY, "true");
+    document.body.classList.remove("auth-locked");
+  } else {
+    sessionStorage.removeItem(AUTH_SESSION_KEY);
+    document.body.classList.add("auth-locked");
+    updateAuthMode();
+    els.authPasswordInput.value = "";
+    els.authConfirmInput.value = "";
+    window.setTimeout(() => els.authPasswordInput.focus(), 0);
+  }
+}
+
+async function handleAuthSubmit(event) {
+  event.preventDefault();
+  const password = els.authPasswordInput.value;
+  if (password.length < 6) return toast("密碼至少需要 6 個字元");
+
+  if (!hasAuthPassword()) {
+    if (password !== els.authConfirmInput.value) return toast("兩次輸入的密碼不一致");
+    localStorage.setItem(AUTH_HASH_KEY, await hashPassword(password));
+    setAuthenticated(true);
+    toast("密碼已設定");
+    return;
+  }
+
+  const inputHash = await hashPassword(password);
+  if (inputHash !== localStorage.getItem(AUTH_HASH_KEY)) {
+    toast("密碼錯誤");
+    return;
+  }
+  setAuthenticated(true);
+  toast("登入成功");
 }
 
 function migrateRecords(records) {
@@ -601,6 +672,8 @@ function toast(message) {
 }
 
 els.navItems.forEach((item) => item.addEventListener("click", () => setView(item.dataset.view)));
+els.authForm.addEventListener("submit", handleAuthSubmit);
+els.logoutBtn.addEventListener("click", () => setAuthenticated(false));
 els.openFormBtn.addEventListener("click", () => openForm());
 els.saveRecordBtn.addEventListener("click", saveForm);
 els.addHandlerBtn.addEventListener("click", addHandler);
@@ -667,3 +740,5 @@ els.recordBody.addEventListener("click", (event) => {
 
 saveRecords();
 render();
+updateAuthMode();
+setAuthenticated(isAuthenticated());

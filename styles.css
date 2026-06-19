@@ -25,6 +25,40 @@ body {
   color: var(--ink);
 }
 
+.auth-screen {
+  display: none;
+  min-height: 100vh;
+  place-items: center;
+  padding: 22px;
+  background: #10221c;
+}
+
+body.auth-locked .auth-screen {
+  display: grid;
+}
+
+body.auth-locked .app-shell {
+  display: none;
+}
+
+.auth-card {
+  width: min(420px, 100%);
+  display: grid;
+  gap: 16px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+.auth-brand {
+  color: var(--ink);
+}
+
+.auth-brand p {
+  color: var(--muted);
+}
+
 button,
 input,
 select,
