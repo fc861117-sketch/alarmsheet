@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>湖口分隊住警器紀錄系統</title>
-    <link rel="stylesheet" href="styles.css?v=20260620-1">
+    <link rel="stylesheet" href="styles.css?v=20260620-2">
   </head>
   <body class="auth-locked">
     <section class="auth-screen" id="authScreen">
@@ -234,8 +234,8 @@
           <label class="required"><span>出生年月日</span><input id="birthInput" type="date" required></label>
           <label class="required"><span>身分證字號</span><input id="nationalIdInput" type="text" maxlength="10" pattern="[A-Z][12][0-9]{8}" placeholder="例：J123456789" required></label>
           <label class="required"><span>聯絡電話</span><input id="phoneInput" type="tel" required></label>
-          <label class="required"><span>個認號碼</span><input id="certificateInput" type="text" value="CFS" placeholder="例：CFS1510171164" required></label>
-          <label class="wide required"><span>完整地址</span><input id="addressInput" type="text" value="新竹縣湖口鄉" required placeholder="例：新竹縣湖口鄉..."></label>
+          <label class="required"><span>個認號碼</span><input id="certificateInput" type="text" value="CFS" maxlength="13" pattern="CFS[0-9]{10}" placeholder="例：CFS1510171164" required></label>
+          <label class="wide required"><span>完整地址</span><input id="addressInput" type="text" value="新竹縣湖口鄉" minlength="7" required placeholder="例：新竹縣湖口鄉..."></label>
           <label class="required">
             <span>場所狀況</span>
             <select id="homeStatusInput" required><option>自有住宅</option><option>租賃住宅</option></select>
@@ -297,6 +297,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="app.js?v=20260620-1"></script>
+    <script src="app.js?v=20260620-2"></script>
   </body>
 </html>

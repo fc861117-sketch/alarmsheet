@@ -6,7 +6,7 @@ const AUTH_SESSION_KEY = "fire-alarm-authenticated";
 const AUTH_SESSION_USERNAME_KEY = "fire-alarm-session-username";
 const AUTH_SESSION_HASH_KEY = "fire-alarm-session-hash";
 const EXPECTED_GAS_VERSION = "2026-06-19-8";
-const APP_ASSET_VERSION = "20260620-1";
+const APP_ASSET_VERSION = "20260620-2";
 const CLOUD_API_PARTS = [
   "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mv",
   "cy9BS2Z5Y2J6VGFzRTVvNXIwQ2R3ZVRaYkpKVzJ6bldF",
@@ -748,7 +748,14 @@ function openForm(record = null) {
   els.noteInput.value = record?.note || "";
   setCheckedValues("personTypes", record?.personTypes || []);
   setCheckedValues("housingType", record?.housingType ? [record.housingType] : []);
+  updateInstallLocationRequirement();
   els.recordDialog.showModal();
+}
+
+function updateInstallLocationRequirement() {
+  const required = els.receiveMethodInput.value === "到府安裝";
+  els.installLocationInput.required = required;
+  els.installLocationInput.closest("label").classList.toggle("required", required);
 }
 
 async function saveForm() {
@@ -787,10 +794,25 @@ function buildRecordFromForm() {
     toast("身分證字號格式錯誤，例：J123456789");
     return null;
   }
+  const address = normalizeText(els.addressInput.value);
+  if (address.length < 7) {
+    toast("地址至少需要 7 個字");
+    return null;
+  }
+  const certificateNo = normalizeText(els.certificateInput.value).toUpperCase();
+  if (!/^CFS[0-9]{10}$/.test(certificateNo)) {
+    toast("個認號碼格式錯誤，需為 CFS 加 10 碼數字");
+    return null;
+  }
+  const installLocation = normalizeText(els.installLocationInput.value);
+  if (els.receiveMethodInput.value === "到府安裝" && !installLocation) {
+    toast("領取方式為到府安裝時，必須輸入安裝位置");
+    return null;
+  }
   const duplicate = findDuplicateApplication({
     id: els.recordId.value,
-    address: normalizeText(els.addressInput.value),
-    certificateNo: normalizeText(els.certificateInput.value),
+    address,
+    certificateNo,
   });
   if (duplicate) {
     toast(`${duplicate.field}與現存資料「${duplicate.name}」重複，禁止儲存或列印`);
@@ -806,11 +828,11 @@ function buildRecordFromForm() {
     birth: normalizeText(els.birthInput.value),
     nationalId,
     phone: normalizeText(els.phoneInput.value),
-    certificateNo: normalizeText(els.certificateInput.value),
-    address: normalizeText(els.addressInput.value),
+    certificateNo,
+    address,
     homeStatus: els.homeStatusInput.value,
     receiveMethod: els.receiveMethodInput.value,
-    installLocation: normalizeText(els.installLocationInput.value),
+    installLocation,
     handler: normalizeText(els.handlerInput.value),
     status: "",
     personTypes,
@@ -1196,6 +1218,10 @@ els.searchInput.addEventListener("input", renderRecords);
 els.nationalIdInput.addEventListener("input", () => {
   els.nationalIdInput.value = els.nationalIdInput.value.toUpperCase();
 });
+els.certificateInput.addEventListener("input", () => {
+  els.certificateInput.value = els.certificateInput.value.toUpperCase();
+});
+els.receiveMethodInput.addEventListener("change", updateInstallLocationRequirement);
 els.handlerFilter.addEventListener("change", renderRecords);
 els.printMode.addEventListener("change", renderPrint);
 els.printRecord.addEventListener("change", renderPrint);
