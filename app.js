@@ -322,7 +322,7 @@ function applicationFormMarkup(record) {
         <tr><th>人員類別</th><td colspan="5">${checkboxLine(record.personTypes, ["低收入戶", "身心障礙者", "兒童(12歲以下)", "孕婦", "年長者(65歲以上)", "獨居長者"])}</td></tr>
         <tr><th>住宅類別</th><td colspan="5">${checkboxLine([record.housingType], ["30年以上住宅", "狹小巷弄地區", "資源回收用途", "曾發生火災事故", "鐵皮屋住宅", "木造建築物", "住宅式宮廟", "裝設鐵窗住宅", "提供居家式托育服務住宅", "未設火災警報設備之住宅"])}</td></tr>
         <tr><th>申請人簽章</th><td colspan="5" class="signature-box">如代理代簽請註明身分證。本人同意個資供補助案使用。</td></tr>
-        <tr><th>受理/執行人員</th><td colspan="2">${escapeHtml(record.handler)}</td><th>分隊長</th><td></td><th>個認號碼</th><td>${escapeHtml(record.certificateNo)}</td></tr>
+        <tr><th>受理/執行人員</th><td colspan="2">${escapeHtml(record.handler)}</td><th>分隊長</th><td>單柏洋</td><th>個認號碼</th><td>${escapeHtml(record.certificateNo)}</td></tr>
       </table>
     </div>
   `;
