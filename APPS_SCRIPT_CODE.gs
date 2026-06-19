@@ -4,7 +4,7 @@ const SETTINGS_SHEET = "Settings";
 const USERNAME_KEY = "sharedUsername";
 const PASSWORD_HASH_KEY = "sharedPasswordHash";
 
-const APPLICATION_HEADERS = [
+const APPLICATION_FIELDS = [
   "id",
   "date",
   "serial",
@@ -24,6 +24,28 @@ const APPLICATION_HEADERS = [
   "status",
   "note",
   "updatedAt",
+];
+
+const APPLICATION_HEADERS = [
+  "系統編號",
+  "申請日期",
+  "序號",
+  "申請人姓名",
+  "性別",
+  "出生年月日",
+  "身分證字號",
+  "聯絡電話",
+  "完整地址",
+  "場所狀況",
+  "領取方式",
+  "安裝位置",
+  "人員類別",
+  "住宅類別",
+  "個認號碼",
+  "受理人員",
+  "狀態",
+  "備註",
+  "更新時間",
 ];
 
 function doGet(e) {
@@ -118,7 +140,7 @@ function saveRecord(record) {
   if (!record || !record.id) throw new Error("資料缺少 id");
   const sheet = getSheet(APPLICATIONS_SHEET);
   const values = sheet.getDataRange().getValues();
-  const row = APPLICATION_HEADERS.map((key) => {
+  const row = APPLICATION_FIELDS.map((key) => {
     const value = record[key];
     return Array.isArray(value) ? value.join("、") : (value || "");
   });
@@ -160,7 +182,7 @@ function readRecords() {
   if (values.length <= 1) return [];
   return values.slice(1).filter((row) => row[0]).map((row) => {
     const record = {};
-    APPLICATION_HEADERS.forEach((key, index) => {
+    APPLICATION_FIELDS.forEach((key, index) => {
       record[key] = row[index] || "";
     });
     record.personTypes = String(record.personTypes || "").split("、").filter(Boolean);
@@ -178,7 +200,7 @@ function ensureSheets() {
   const appSheet = getSheet(APPLICATIONS_SHEET);
   const settingsSheet = getSheet(SETTINGS_SHEET);
   ensureHeaders(appSheet, APPLICATION_HEADERS);
-  if (settingsSheet.getLastRow() === 0) settingsSheet.getRange(1, 1).setValue("handlers");
+  if (settingsSheet.getRange(1, 1).getValue() !== "受理人員") settingsSheet.getRange(1, 1).setValue("受理人員");
 }
 
 function ensureHeaders(sheet, headers) {
