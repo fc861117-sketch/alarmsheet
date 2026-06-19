@@ -462,8 +462,13 @@ function formatDate(value) {
 
 function toDateInputValue(value) {
   if (!value) return "";
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-  const match = String(value).match(/民國\s*(\d{1,3})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/);
+  const text = String(value).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+  const isoMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})T/);
+  if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+  const slashMatch = text.match(/^(\d{4})[\/.](\d{1,2})[\/.](\d{1,2})$/);
+  if (slashMatch) return `${slashMatch[1]}-${slashMatch[2].padStart(2, "0")}-${slashMatch[3].padStart(2, "0")}`;
+  const match = text.match(/民國\s*(\d{1,3})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/);
   if (!match) return "";
   const year = Number(match[1]) + 1911;
   const month = String(match[2]).padStart(2, "0");
@@ -712,7 +717,7 @@ function openForm(record = null) {
   els.recordForm.reset();
   els.recordId.value = record?.id || "";
   els.dialogTitle.textContent = record ? "編輯申請資料" : "新增申請資料";
-  els.dateInput.value = record?.date || todayString();
+  els.dateInput.value = toDateInputValue(record?.date) || todayString();
   els.serialInput.value = record?.serial || nextSerial();
   els.nameInput.value = record?.name || "";
   els.genderInput.value = record?.gender || "";
@@ -955,7 +960,7 @@ function legacyRowToRecord(headers, row) {
     serial,
     name,
     gender: get("性別"),
-    birth: get("出生年月日"),
+    birth: toDateInputValue(get("出生年月日")),
     nationalId: get("申請人身分證字號", "身分證字號", "國民身分證統一編號").toUpperCase(),
     phone: get("申請人電話", "聯絡電話", "連絡電話"),
     address: get("申請人地址", "完整地址", "地址") || "新竹縣湖口鄉",
