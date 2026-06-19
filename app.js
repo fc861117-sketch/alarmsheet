@@ -6,7 +6,7 @@ const AUTH_SESSION_KEY = "fire-alarm-authenticated";
 const AUTH_SESSION_USERNAME_KEY = "fire-alarm-session-username";
 const AUTH_SESSION_HASH_KEY = "fire-alarm-session-hash";
 const EXPECTED_GAS_VERSION = "2026-06-19-8";
-const APP_ASSET_VERSION = "20260620-5";
+const APP_ASSET_VERSION = "20260620-6";
 const CLOUD_API_PARTS = [
   "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mv",
   "cy9BS2Z5Y2J6VGFzRTVvNXIwQ2R3ZVRaYkpKVzJ6bldF",
@@ -59,6 +59,10 @@ const els = {
   nameInput: document.querySelector("#nameInput"),
   genderInput: document.querySelector("#genderInput"),
   birthInput: document.querySelector("#birthInput"),
+  birthRocYearInput: document.querySelector("#birthRocYearInput"),
+  birthRocMonthInput: document.querySelector("#birthRocMonthInput"),
+  birthRocDayInput: document.querySelector("#birthRocDayInput"),
+  birthConvertedText: document.querySelector("#birthConvertedText"),
   nationalIdInput: document.querySelector("#nationalIdInput"),
   phoneInput: document.querySelector("#phoneInput"),
   certificateInput: document.querySelector("#certificateInput"),
@@ -478,6 +482,64 @@ function toDateInputValue(value) {
   return `${year}-${month}-${day}`;
 }
 
+function populateRocDateOptions() {
+  const currentRocYear = new Date().getFullYear() - 1911;
+  fillSelectOptions(els.birthRocYearInput, Array.from({ length: currentRocYear }, (_, index) => String(index + 1)), "年");
+  fillSelectOptions(els.birthRocMonthInput, Array.from({ length: 12 }, (_, index) => String(index + 1)), "月");
+  fillSelectOptions(els.birthRocDayInput, Array.from({ length: 31 }, (_, index) => String(index + 1)), "日");
+}
+
+function fillSelectOptions(select, values, placeholder) {
+  select.innerHTML = `<option value="">${placeholder}</option>${values.map((value) => `<option value="${value}">${value}</option>`).join("")}`;
+}
+
+function setBirthFromDate(value) {
+  const dateValue = toDateInputValue(value);
+  els.birthInput.value = dateValue;
+  if (!dateValue) {
+    els.birthRocYearInput.value = "";
+    els.birthRocMonthInput.value = "";
+    els.birthRocDayInput.value = "";
+    els.birthConvertedText.textContent = "西元日期：未換算";
+    return;
+  }
+  const [year, month, day] = dateValue.split("-").map(Number);
+  els.birthRocYearInput.value = year - 1911;
+  els.birthRocMonthInput.value = month;
+  els.birthRocDayInput.value = day;
+  els.birthConvertedText.textContent = `西元日期：${dateValue}`;
+}
+
+function updateBirthFromRoc(options = {}) {
+  const rocYear = Number(els.birthRocYearInput.value);
+  const month = Number(els.birthRocMonthInput.value);
+  const day = Number(els.birthRocDayInput.value);
+  if (!rocYear || !month || !day) {
+    els.birthInput.value = "";
+    els.birthConvertedText.textContent = "西元日期：未換算";
+    return "";
+  }
+
+  const year = rocYear + 1911;
+  const date = new Date(year, month - 1, day);
+  const isValid = date.getFullYear() === year
+    && date.getMonth() === month - 1
+    && date.getDate() === day;
+  if (!isValid) {
+    els.birthInput.value = "";
+    els.birthConvertedText.textContent = "西元日期：日期不正確";
+    if (options.notify) toast("系統提示：出生年月日格式不正確，請重新選擇。");
+    return "";
+  }
+
+  const dateValue = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  const changed = els.birthInput.value !== dateValue;
+  els.birthInput.value = dateValue;
+  els.birthConvertedText.textContent = `西元日期：${dateValue}`;
+  if (options.notify && changed) toast(`系統提示：出生年月日已換算為西元 ${dateValue}`);
+  return dateValue;
+}
+
 function normalizeText(value) {
   return String(value || "").replace(/^\uFEFF/, "").trim();
 }
@@ -668,7 +730,7 @@ function singleApplicationFormMarkup(record) {
           <col class="col-main">
         </colgroup>
         <tr>
-          <th rowspan="7" class="vertical-title">申請人資料</th>
+          <th rowspan="6" class="vertical-title">申請人資料</th>
           <th>姓名</th>
           <td>${escapeHtml(record.name)}</td>
           <th>性別</th>
@@ -693,19 +755,18 @@ function singleApplicationFormMarkup(record) {
           <td colspan="2" class="signature-note">申請人簽章：________________<br><small>（如為代理人代簽，請註明身分證統一編號）本表資料涉個資部份，本人同意供新竹縣政府辦理補助案運用。</small></td>
         </tr>
         <tr>
-          <th rowspan="3">申請類別<br>（可複選）</th>
+          <th rowspan="2">申請類別<br>（可複選）</th>
           <th>人員類別</th>
           <td colspan="5" class="option-grid two-col">${checkboxItems(record.personTypes, ["低收入戶", "孕婦", "身心障礙者", "年長者(65歲以上)", "兒童(12歲以下)", "獨居長者"])}</td>
         </tr>
         <tr>
-          <th rowspan="2">住宅類別</th>
-          <td colspan="5" class="option-grid two-col">${checkboxItems([record.housingType], ["鐵皮屋住宅", "30年以上住宅", "木造建築物", "狹小巷弄地區", "住宅式宮廟", "資源回收用途", "裝設鐵窗住宅", "曾發生火災事故", "提供居家式托育服務住宅", "未設火警自動警報設備之住宅"])}</td>
+          <th>住宅類別</th>
+          <td colspan="5" class="option-grid two-col">${checkboxItems([record.housingType], ["鐵皮屋住宅", "30年以上住宅", "木造建築物", "狹小巷弄地區", "住宅式宮廟", "資源回收用途", "裝設鐵窗住宅", "曾發生火災事故", "提供居家式托育服務住宅", "未設火災警報設備之住宅"])}</td>
         </tr>
-        <tr></tr>
         <tr>
           <td colspan="3" class="footer-cell">受理/執行人員：${escapeHtml(record.handler)}</td>
-          <td colspan="3" class="footer-cell">分隊長：單柏洋</td>
-          <td class="footer-cell">個認號碼<br>${escapeHtml(record.certificateNo)}</td>
+          <td colspan="2" class="footer-cell">分隊長：單柏洋</td>
+          <td colspan="2" class="footer-cell">個認號碼<br>${escapeHtml(record.certificateNo)}</td>
         </tr>
       </table>
     </section>
@@ -783,11 +844,17 @@ function checkboxLine(values, options) {
 }
 
 function checkboxItems(values, options) {
-  return options.map((option) => `<span>${values.includes(option) ? "☑" : "☐"}${escapeHtml(option)}</span>`).join("");
+  return options.map((option) => {
+    const checked = values.includes(option);
+    return `<span><i class="print-check${checked ? " checked" : ""}" aria-hidden="true"></i>${escapeHtml(option)}</span>`;
+  }).join("");
 }
 
 function checkStack(value, options) {
-  return options.map((option) => `<div>${value === option ? "☑" : "☐"}${escapeHtml(option)}</div>`).join("");
+  return options.map((option) => {
+    const checked = value === option;
+    return `<div><i class="print-check${checked ? " checked" : ""}" aria-hidden="true"></i>${escapeHtml(option)}</div>`;
+  }).join("");
 }
 
 function openForm(record = null) {
@@ -798,7 +865,7 @@ function openForm(record = null) {
   els.serialInput.value = record?.serial || nextSerial();
   els.nameInput.value = record?.name || "";
   els.genderInput.value = record?.gender || "";
-  els.birthInput.value = toDateInputValue(record?.birth);
+  setBirthFromDate(record?.birth);
   els.nationalIdInput.value = record?.nationalId || "";
   els.phoneInput.value = record?.phone || "";
   els.certificateInput.value = record?.certificateNo || "CFS";
@@ -841,6 +908,11 @@ async function saveForm() {
 
 function buildRecordFromForm() {
   if (!els.recordForm.reportValidity()) return null;
+  const birth = updateBirthFromRoc({ notify: true });
+  if (!birth) {
+    toast("系統提示：請輸入正確的出生年月日。");
+    return null;
+  }
   const personTypes = selectedValues("personTypes");
   const housingType = selectedValues("housingType")[0] || "";
   if (!personTypes.length) {
@@ -887,7 +959,7 @@ function buildRecordFromForm() {
     serial: normalizeText(els.serialInput.value),
     name: normalizeText(els.nameInput.value),
     gender: els.genderInput.value,
-    birth: normalizeText(els.birthInput.value),
+    birth,
     nationalId,
     phone: normalizeText(els.phoneInput.value),
     certificateNo,
@@ -1258,6 +1330,8 @@ function toast(message) {
   toast.timer = window.setTimeout(() => els.toast.classList.remove("show"), 2200);
 }
 
+populateRocDateOptions();
+
 els.navItems.forEach((item) => item.addEventListener("click", () => setView(item.dataset.view)));
 els.authForm.addEventListener("submit", handleAuthSubmit);
 els.logoutBtn.addEventListener("click", () => setAuthenticated(false));
@@ -1285,6 +1359,14 @@ els.nationalIdInput.addEventListener("input", () => {
 });
 els.certificateInput.addEventListener("input", () => {
   els.certificateInput.value = els.certificateInput.value.toUpperCase();
+});
+[
+  els.birthRocYearInput,
+  els.birthRocMonthInput,
+  els.birthRocDayInput,
+].forEach((input) => {
+  input.addEventListener("input", () => updateBirthFromRoc());
+  input.addEventListener("change", () => updateBirthFromRoc({ notify: true }));
 });
 els.receiveMethodInput.addEventListener("change", updateInstallLocationRequirement);
 els.handlerFilter.addEventListener("change", renderRecords);

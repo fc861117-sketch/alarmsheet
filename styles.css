@@ -422,7 +422,8 @@ label span {
   font-weight: 700;
 }
 
-label.required span::after {
+label.required > span::after,
+.check-group.required legend::after {
   content: " *";
   color: var(--danger);
 }
@@ -630,6 +631,24 @@ td {
   gap: 14px;
 }
 
+.roc-date-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(72px, 110px)) minmax(160px, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.roc-date-row input,
+.roc-date-row select {
+  min-width: 0;
+}
+
+.converted-date {
+  color: var(--accent-dark);
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .check-group {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -797,6 +816,13 @@ td {
   line-height: 1.28;
 }
 
+.pdf-application-table th,
+.pdf-application-table td {
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .pdf-application-table .col-side {
   width: 6%;
 }
@@ -843,6 +869,20 @@ td {
   width: 48%;
   margin: 0 0 3px;
   vertical-align: top;
+}
+
+.print-check {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border: 1.4px solid #000;
+  margin-right: 4px;
+  vertical-align: -1px;
+  box-sizing: border-box;
+}
+
+.print-check.checked {
+  background: #000;
 }
 
 .footer-cell {
@@ -910,6 +950,14 @@ td {
   .check-group {
     grid-template-columns: 1fr 1fr;
   }
+
+  .roc-date-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .converted-date {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 640px) {
@@ -929,6 +977,10 @@ td {
   }
 
   .check-group {
+    grid-template-columns: 1fr;
+  }
+
+  .roc-date-row {
     grid-template-columns: 1fr;
   }
 

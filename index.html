@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>湖口分隊住警器紀錄系統</title>
-    <link rel="stylesheet" href="styles.css?v=20260620-5">
+    <link rel="stylesheet" href="styles.css?v=20260620-6">
   </head>
   <body class="auth-locked">
     <section class="auth-screen" id="authScreen">
@@ -231,7 +231,16 @@
             <span>性別</span>
             <select id="genderInput" required><option value="">請選擇</option><option>男</option><option>女</option></select>
           </label>
-          <label class="required"><span>出生年月日</span><input id="birthInput" type="date" required></label>
+          <label class="required wide">
+            <span>出生年月日（民國）</span>
+            <div class="roc-date-row">
+              <select id="birthRocYearInput" required><option value="">年</option></select>
+              <select id="birthRocMonthInput" required><option value="">月</option></select>
+              <select id="birthRocDayInput" required><option value="">日</option></select>
+              <input id="birthInput" type="hidden" required>
+              <span id="birthConvertedText" class="converted-date">西元日期：未換算</span>
+            </div>
+          </label>
           <label class="required"><span>身分證字號</span><input id="nationalIdInput" type="text" maxlength="10" pattern="[A-Z][12][0-9]{8}" placeholder="例：J123456789" required></label>
           <label class="required"><span>聯絡電話</span><input id="phoneInput" type="tel" required></label>
           <label class="required"><span>個認號碼</span><input id="certificateInput" type="text" value="CFS" maxlength="13" pattern="CFS[0-9]{10}" placeholder="例：CFS1510171164" required></label>
@@ -297,6 +306,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="app.js?v=20260620-5"></script>
+    <script src="app.js?v=20260620-6"></script>
   </body>
 </html>
