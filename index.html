@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>湖口分隊住警器紀錄系統</title>
-    <link rel="stylesheet" href="styles.css?v=20260619-10">
+    <link rel="stylesheet" href="styles.css?v=20260619-11">
   </head>
   <body class="auth-locked">
     <section class="auth-screen" id="authScreen">
@@ -155,10 +155,6 @@
                 <span>申請人</span>
                 <select id="printRecord"></select>
               </label>
-              <label>
-                <span>承辦單位</span>
-                <input id="agencyInput" type="text" value="消防分隊">
-              </label>
               <button class="primary-button" id="printBtn" type="button">列印</button>
             </div>
           </div>
@@ -282,6 +278,7 @@
 
         <div class="dialog-actions">
           <button class="ghost-button" data-cancel-form type="button">取消</button>
+          <button class="ghost-button" id="printCurrentRecordBtn" type="button">列印目前表單</button>
           <button class="primary-button" id="saveRecordBtn" type="button">儲存</button>
         </div>
       </form>
@@ -302,6 +299,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="app.js?v=20260619-10"></script>
+    <script src="app.js?v=20260619-11"></script>
   </body>
 </html>

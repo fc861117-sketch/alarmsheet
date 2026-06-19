@@ -6,7 +6,7 @@ const AUTH_SESSION_KEY = "fire-alarm-authenticated";
 const AUTH_SESSION_USERNAME_KEY = "fire-alarm-session-username";
 const AUTH_SESSION_HASH_KEY = "fire-alarm-session-hash";
 const EXPECTED_GAS_VERSION = "2026-06-19-8";
-const APP_ASSET_VERSION = "20260619-10";
+const APP_ASSET_VERSION = "20260619-11";
 const CLOUD_API_PARTS = [
   "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mv",
   "cy9BS2Z5Y2J6VGFzRTVvNXIwQ2R3ZVRaYkpKVzJ6bldF",
@@ -69,6 +69,7 @@ const els = {
   handlerInput: document.querySelector("#handlerInput"),
   noteInput: document.querySelector("#noteInput"),
   saveRecordBtn: document.querySelector("#saveRecordBtn"),
+  printCurrentRecordBtn: document.querySelector("#printCurrentRecordBtn"),
   statHouseholds: document.querySelector("#statHouseholds"),
   statPickup: document.querySelector("#statPickup"),
   statInstall: document.querySelector("#statInstall"),
@@ -80,7 +81,6 @@ const els = {
   recordBody: document.querySelector("#recordBody"),
   printMode: document.querySelector("#printMode"),
   printRecord: document.querySelector("#printRecord"),
-  agencyInput: document.querySelector("#agencyInput"),
   printBtn: document.querySelector("#printBtn"),
   applicationPrint: document.querySelector("#applicationPrint"),
   listPrint: document.querySelector("#listPrint"),
@@ -452,7 +452,9 @@ function todayString() {
 
 function formatDate(value) {
   if (!value) return "";
-  const date = new Date(`${value}T00:00:00`);
+  const dateValue = toDateInputValue(value);
+  if (!dateValue) return String(value).split("T")[0];
+  const date = new Date(`${dateValue}T00:00:00`);
   return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString("zh-TW");
 }
 
@@ -657,7 +659,6 @@ function renderListPrint() {
     <div class="print-heading">
       <div>
         <h3>住宅用火災警報器發放簽收清冊</h3>
-        <p>承辦單位：${escapeHtml(els.agencyInput.value || "消防分隊")}</p>
       </div>
       <p>列印日期：${new Date().toLocaleDateString("zh-TW")}</p>
     </div>
@@ -744,16 +745,43 @@ function openForm(record = null) {
 }
 
 async function saveForm() {
-  if (!els.recordForm.reportValidity()) return;
+  const record = buildRecordFromForm();
+  if (!record) return;
+
+  const index = state.records.findIndex((item) => item.id === record.id);
+  if (index >= 0) state.records[index] = record;
+  else state.records.push(record);
+
+  saveRecords();
+  els.recordDialog.close();
+  render();
+  try {
+    await syncRecordToCloud(record);
+    toast("資料已儲存並同步到雲端");
+  } catch {
+    toast("資料已先儲存在本機，雲端同步失敗");
+  }
+}
+
+function buildRecordFromForm() {
+  if (!els.recordForm.reportValidity()) return null;
   const personTypes = selectedValues("personTypes");
   const housingType = selectedValues("housingType")[0] || "";
-  if (!personTypes.length) return toast("請至少選一項人員類別");
-  if (!housingType) return toast("請選一項住宅類別");
+  if (!personTypes.length) {
+    toast("請至少選一項人員類別");
+    return null;
+  }
+  if (!housingType) {
+    toast("請選一項住宅類別");
+    return null;
+  }
   const nationalId = normalizeText(els.nationalIdInput.value).toUpperCase();
-  if (!/^[A-Z][12][0-9]{8}$/.test(nationalId)) return toast("身分證字號格式錯誤，例：J123456789");
+  if (!/^[A-Z][12][0-9]{8}$/.test(nationalId)) {
+    toast("身分證字號格式錯誤，例：J123456789");
+    return null;
+  }
 
-  const now = new Date().toISOString();
-  const record = {
+  return {
     id: els.recordId.value || crypto.randomUUID(),
     date: els.dateInput.value,
     serial: normalizeText(els.serialInput.value),
@@ -772,22 +800,18 @@ async function saveForm() {
     personTypes,
     housingType,
     note: normalizeText(els.noteInput.value),
-    updatedAt: now,
+    updatedAt: new Date().toISOString(),
   };
+}
 
-  const index = state.records.findIndex((item) => item.id === record.id);
-  if (index >= 0) state.records[index] = record;
-  else state.records.push(record);
-
-  saveRecords();
-  els.recordDialog.close();
-  render();
-  try {
-    await syncRecordToCloud(record);
-    toast("資料已儲存並同步到雲端");
-  } catch {
-    toast("資料已先儲存在本機，雲端同步失敗");
-  }
+function printCurrentForm() {
+  const record = buildRecordFromForm();
+  if (!record) return;
+  els.printMode.value = "application";
+  els.applicationPrint.hidden = false;
+  els.listPrint.hidden = true;
+  els.applicationPrint.innerHTML = applicationFormMarkup(record);
+  window.print();
 }
 
 async function addHandler() {
@@ -1107,6 +1131,7 @@ els.authForm.addEventListener("submit", handleAuthSubmit);
 els.logoutBtn.addEventListener("click", () => setAuthenticated(false));
 els.openFormBtn.addEventListener("click", () => openForm());
 els.saveRecordBtn.addEventListener("click", saveForm);
+els.printCurrentRecordBtn.addEventListener("click", printCurrentForm);
 els.addHandlerBtn.addEventListener("click", addHandler);
 els.newHandlerInput.addEventListener("keydown", (event) => {
   if (event.key !== "Enter") return;
@@ -1129,7 +1154,6 @@ els.nationalIdInput.addEventListener("input", () => {
 els.handlerFilter.addEventListener("input", renderRecords);
 els.printMode.addEventListener("change", renderPrint);
 els.printRecord.addEventListener("change", renderPrint);
-els.agencyInput.addEventListener("input", renderPrint);
 els.printBtn.addEventListener("click", () => {
   renderPrint();
   window.print();

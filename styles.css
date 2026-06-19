@@ -837,6 +837,7 @@ td {
   .sidebar,
   .topbar,
   .no-print,
+  .record-dialog,
   .toast {
     display: none !important;
   }
