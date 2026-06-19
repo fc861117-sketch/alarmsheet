@@ -6,7 +6,7 @@ const AUTH_SESSION_KEY = "fire-alarm-authenticated";
 const AUTH_SESSION_USERNAME_KEY = "fire-alarm-session-username";
 const AUTH_SESSION_HASH_KEY = "fire-alarm-session-hash";
 const EXPECTED_GAS_VERSION = "2026-06-19-8";
-const APP_ASSET_VERSION = "20260619-11";
+const APP_ASSET_VERSION = "20260619-12";
 const CLOUD_API_PARTS = [
   "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mv",
   "cy9BS2Z5Y2J6VGFzRTVvNXIwQ2R3ZVRaYkpKVzJ6bldF",
@@ -780,6 +780,15 @@ function buildRecordFromForm() {
     toast("身分證字號格式錯誤，例：J123456789");
     return null;
   }
+  const duplicate = findDuplicateApplication({
+    id: els.recordId.value,
+    address: normalizeText(els.addressInput.value),
+    certificateNo: normalizeText(els.certificateInput.value),
+  });
+  if (duplicate) {
+    toast(`${duplicate.field}與現存資料「${duplicate.name}」重複，禁止儲存或列印`);
+    return null;
+  }
 
   return {
     id: els.recordId.value || crypto.randomUUID(),
@@ -802,6 +811,35 @@ function buildRecordFromForm() {
     note: normalizeText(els.noteInput.value),
     updatedAt: new Date().toISOString(),
   };
+}
+
+function findDuplicateApplication(current) {
+  const currentId = normalizeText(current.id);
+  const currentAddress = normalizeForDuplicate(current.address);
+  const currentCertificate = normalizeForDuplicate(current.certificateNo);
+  return state.records
+    .filter((record) => record.id !== currentId)
+    .map((record) => ({
+      id: record.id,
+      name: record.name || record.serial || "未命名資料",
+      address: normalizeForDuplicate(record.address),
+      certificateNo: normalizeForDuplicate(record.certificateNo),
+    }))
+    .find((record) => {
+      if (currentAddress && record.address === currentAddress) {
+        record.field = "地址";
+        return true;
+      }
+      if (currentCertificate && record.certificateNo === currentCertificate) {
+        record.field = "個認號碼";
+        return true;
+      }
+      return false;
+    });
+}
+
+function normalizeForDuplicate(value) {
+  return normalizeText(value).replace(/\s+/g, "").toUpperCase();
 }
 
 function printCurrentForm() {
