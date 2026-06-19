@@ -999,7 +999,7 @@ td {
 
 @page {
   size: A4 portrait;
-  margin: 8mm;
+  margin: 10mm;
 }
 
 @media print {
@@ -1034,8 +1034,8 @@ td {
   .print-sheet {
     border: 0;
     padding: 0;
-    width: 194mm;
-    max-width: 194mm;
+    width: 182mm;
+    max-width: 182mm;
     margin: 0 auto;
     overflow: visible;
   }
@@ -1052,8 +1052,8 @@ td {
   }
 
   .application-page {
-    width: 194mm;
-    max-width: 194mm;
+    width: 182mm;
+    max-width: 182mm;
     margin: 0 auto;
     page-break-inside: avoid;
     break-inside: avoid;
@@ -1070,25 +1070,25 @@ td {
   }
 
   .pdf-form-title h3 {
-    font-size: 17pt;
+    font-size: 15pt;
   }
 
   .pdf-form-title p {
-    min-width: 42mm;
-    font-size: 11pt;
+    min-width: 36mm;
+    font-size: 10pt;
   }
 
   .pdf-application-table {
-    width: 194mm;
-    max-width: 194mm;
-    font-size: 10.2pt;
-    line-height: 1.16;
+    width: 182mm;
+    max-width: 182mm;
+    font-size: 9.2pt;
+    line-height: 1.12;
     border-width: 1.4px;
   }
 
   .pdf-application-table th,
   .pdf-application-table td {
-    padding: 2.2mm 1.8mm;
+    padding: 1.6mm 1.35mm;
   }
 
   .pdf-application-table .col-side {
@@ -1096,19 +1096,19 @@ td {
   }
 
   .pdf-application-table .col-label {
-    width: 28mm;
+    width: 24mm;
   }
 
   .pdf-application-table .col-main {
-    width: 45mm;
+    width: 42mm;
   }
 
   .pdf-application-table .col-label-sm {
-    width: 15mm;
+    width: 17mm;
   }
 
   .pdf-application-table .col-sex {
-    width: 15mm;
+    width: 14mm;
   }
 
   .vertical-title {
@@ -1117,21 +1117,27 @@ td {
   }
 
   .pdf-application-table small {
-    font-size: 8.3pt;
+    font-size: 7.4pt;
   }
 
   .signature-note {
-    height: 23mm;
+    height: 21mm;
   }
 
   .footer-cell {
-    height: 13mm;
-    font-size: 10.5pt;
+    height: 12mm;
+    font-size: 9.3pt;
   }
 
   .option-grid span {
-    width: 49%;
-    margin-bottom: 0.8mm;
+    width: 48.5%;
+    margin-bottom: 0.5mm;
+  }
+
+  .print-check {
+    width: 8.5px;
+    height: 8.5px;
+    margin-right: 2.5px;
   }
 
   body.sample-printing .app-shell {

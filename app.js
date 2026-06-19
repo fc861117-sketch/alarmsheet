@@ -6,7 +6,7 @@ const AUTH_SESSION_KEY = "fire-alarm-authenticated";
 const AUTH_SESSION_USERNAME_KEY = "fire-alarm-session-username";
 const AUTH_SESSION_HASH_KEY = "fire-alarm-session-hash";
 const EXPECTED_GAS_VERSION = "2026-06-19-8";
-const APP_ASSET_VERSION = "20260620-6";
+const APP_ASSET_VERSION = "20260620-7";
 const CLOUD_API_PARTS = [
   "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mv",
   "cy9BS2Z5Y2J6VGFzRTVvNXIwQ2R3ZVRaYkpKVzJ6bldF",
@@ -422,27 +422,30 @@ async function handleAuthSubmit(event) {
 }
 
 function migrateRecords(records) {
-  return records.map((record) => ({
-    id: record.id || crypto.randomUUID(),
-    date: record.date || todayString(),
-    serial: record.serial || record.serialNo || "",
-    name: record.name || "",
-    gender: record.gender || "",
-    birth: record.birth || record.birthDate || "",
-    nationalId: record.nationalId || "",
-    phone: record.phone || "",
-    address: record.address || "",
-    homeStatus: record.homeStatus || "自有住宅",
-    receiveMethod: record.receiveMethod || "自行領取",
-    installLocation: record.installLocation || "",
-    personTypes: Array.isArray(record.personTypes) ? record.personTypes : [],
-    housingType: record.housingType || "未設火災警報設備之住宅",
-    certificateNo: record.certificateNo || record.certificate || "",
-    handler: record.handler || "",
-    status: "",
-    note: record.note || "",
-    updatedAt: record.updatedAt || new Date().toISOString(),
-  }));
+  return records.map((record) => {
+    const nationalId = normalizeText(record.nationalId || record["身分證字號"]).toUpperCase();
+    return {
+      id: record.id || crypto.randomUUID(),
+      date: record.date || todayString(),
+      serial: record.serial || record.serialNo || "",
+      name: record.name || "",
+      gender: normalizeGender(record.gender || record.sex || record["性別"]) || deriveGenderFromNationalId(nationalId),
+      birth: record.birth || record.birthDate || "",
+      nationalId,
+      phone: record.phone || "",
+      address: record.address || "",
+      homeStatus: normalizeOptionValue(record.homeStatus, ["自有住宅", "租賃住宅"], "自有住宅"),
+      receiveMethod: normalizeOptionValue(record.receiveMethod, ["自行領取", "到府安裝"], "自行領取"),
+      installLocation: record.installLocation || "",
+      personTypes: Array.isArray(record.personTypes) ? record.personTypes : [],
+      housingType: record.housingType || "未設火災警報設備之住宅",
+      certificateNo: record.certificateNo || record.certificate || "",
+      handler: record.handler || "",
+      status: "",
+      note: record.note || "",
+      updatedAt: record.updatedAt || new Date().toISOString(),
+    };
+  });
 }
 
 function saveRecords() {
@@ -472,6 +475,10 @@ function toDateInputValue(value) {
   if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
   const isoMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})T/);
   if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+  const taiwanMatch = text.match(/^(\d{2,3})[\/.](\d{1,2})[\/.](\d{1,2})$/);
+  if (taiwanMatch && Number(taiwanMatch[1]) < 1911) {
+    return `${Number(taiwanMatch[1]) + 1911}-${taiwanMatch[2].padStart(2, "0")}-${taiwanMatch[3].padStart(2, "0")}`;
+  }
   const slashMatch = text.match(/^(\d{4})[\/.](\d{1,2})[\/.](\d{1,2})$/);
   if (slashMatch) return `${slashMatch[1]}-${slashMatch[2].padStart(2, "0")}-${slashMatch[3].padStart(2, "0")}`;
   const match = text.match(/民國\s*(\d{1,3})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/);
@@ -542,6 +549,35 @@ function updateBirthFromRoc(options = {}) {
 
 function normalizeText(value) {
   return String(value || "").replace(/^\uFEFF/, "").trim();
+}
+
+function normalizeGender(value) {
+  const text = normalizeText(value);
+  if (!text) return "";
+  if (["男", "男性", "m", "M", "1"].includes(text)) return "男";
+  if (["女", "女性", "f", "F", "2"].includes(text)) return "女";
+  return text.includes("男") ? "男" : (text.includes("女") ? "女" : text);
+}
+
+function deriveGenderFromNationalId(value) {
+  const text = normalizeText(value).toUpperCase();
+  if (/^[A-Z]\s*1/.test(text)) return "男";
+  if (/^[A-Z]\s*2/.test(text)) return "女";
+  return "";
+}
+
+function normalizeOptionValue(value, options, fallback = "") {
+  const text = normalizeText(value);
+  if (!text) return fallback;
+  return options.find((option) => option === text || text.includes(option) || option.includes(text)) || text;
+}
+
+function setSelectValue(select, value, fallback = "") {
+  const selectedValue = normalizeText(value) || fallback;
+  if (selectedValue && !Array.from(select.options).some((option) => option.value === selectedValue)) {
+    select.add(new Option(selectedValue, selectedValue));
+  }
+  select.value = selectedValue;
 }
 
 function uniqueNames(values) {
@@ -757,11 +793,11 @@ function singleApplicationFormMarkup(record) {
         <tr>
           <th rowspan="2">申請類別<br>（可複選）</th>
           <th>人員類別</th>
-          <td colspan="5" class="option-grid two-col">${checkboxItems(record.personTypes, ["低收入戶", "孕婦", "身心障礙者", "年長者(65歲以上)", "兒童(12歲以下)", "獨居長者"])}</td>
+          <td colspan="4" class="option-grid two-col">${checkboxItems(record.personTypes, ["低收入戶", "孕婦", "身心障礙者", "年長者(65歲以上)", "兒童(12歲以下)", "獨居長者"])}</td>
         </tr>
         <tr>
           <th>住宅類別</th>
-          <td colspan="5" class="option-grid two-col">${checkboxItems([record.housingType], ["鐵皮屋住宅", "30年以上住宅", "木造建築物", "狹小巷弄地區", "住宅式宮廟", "資源回收用途", "裝設鐵窗住宅", "曾發生火災事故", "提供居家式托育服務住宅", "未設火災警報設備之住宅"])}</td>
+          <td colspan="4" class="option-grid two-col">${checkboxItems([record.housingType], ["鐵皮屋住宅", "30年以上住宅", "木造建築物", "狹小巷弄地區", "住宅式宮廟", "資源回收用途", "裝設鐵窗住宅", "曾發生火災事故", "提供居家式托育服務住宅", "未設火災警報設備之住宅"])}</td>
         </tr>
         <tr>
           <td colspan="3" class="footer-cell">受理/執行人員：${escapeHtml(record.handler)}</td>
@@ -864,14 +900,14 @@ function openForm(record = null) {
   els.dateInput.value = toDateInputValue(record?.date) || todayString();
   els.serialInput.value = record?.serial || nextSerial();
   els.nameInput.value = record?.name || "";
-  els.genderInput.value = record?.gender || "";
+  setSelectValue(els.genderInput, normalizeGender(record?.gender) || deriveGenderFromNationalId(record?.nationalId));
   setBirthFromDate(record?.birth);
   els.nationalIdInput.value = record?.nationalId || "";
   els.phoneInput.value = record?.phone || "";
   els.certificateInput.value = record?.certificateNo || "CFS";
   els.addressInput.value = record?.address || "新竹縣湖口鄉";
-  els.homeStatusInput.value = record?.homeStatus || "自有住宅";
-  els.receiveMethodInput.value = record?.receiveMethod || "自行領取";
+  setSelectValue(els.homeStatusInput, normalizeOptionValue(record?.homeStatus, ["自有住宅", "租賃住宅"], "自有住宅"));
+  setSelectValue(els.receiveMethodInput, normalizeOptionValue(record?.receiveMethod, ["自行領取", "到府安裝"], "自行領取"));
   els.installLocationInput.value = record?.installLocation || "";
   els.handlerInput.value = record?.handler || "";
   els.noteInput.value = record?.note || "";
@@ -1187,15 +1223,16 @@ function legacyRowToRecord(headers, row) {
   const name = get("申請人姓名", "姓名");
   if (!serial && !name) return null;
   const methodParts = splitReceiveMethod(get("領取方式/位置", "領取方式"));
+  const nationalId = get("申請人身分證字號", "身分證字號", "國民身分證統一編號").toUpperCase();
   const now = new Date().toISOString();
   const record = {
     id: `legacy-${serial || name}`.replace(/[^\w\u4e00-\u9fa5-]/g, "-"),
     date: dateFromSerial(serial) || todayString(),
     serial,
     name,
-    gender: get("性別"),
+    gender: normalizeGender(get("性別")) || deriveGenderFromNationalId(nationalId),
     birth: toDateInputValue(get("出生年月日")),
-    nationalId: get("申請人身分證字號", "身分證字號", "國民身分證統一編號").toUpperCase(),
+    nationalId,
     phone: get("申請人電話", "聯絡電話", "連絡電話"),
     address: get("申請人地址", "完整地址", "地址") || "新竹縣湖口鄉",
     homeStatus: get("場所狀況") || "自有住宅",
