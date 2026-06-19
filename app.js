@@ -1,5 +1,6 @@
 const STORAGE_KEY = "fire-alarm-application-records";
 const HANDLER_STORAGE_KEY = "fire-alarm-handlers";
+const AUTH_USERNAME_KEY = "fire-alarm-auth-username";
 const AUTH_HASH_KEY = "fire-alarm-auth-hash";
 const AUTH_SESSION_KEY = "fire-alarm-authenticated";
 
@@ -26,6 +27,7 @@ const els = {
   authScreen: document.querySelector("#authScreen"),
   authForm: document.querySelector("#authForm"),
   authHint: document.querySelector("#authHint"),
+  authUsernameInput: document.querySelector("#authUsernameInput"),
   authPasswordInput: document.querySelector("#authPasswordInput"),
   authConfirmWrap: document.querySelector("#authConfirmWrap"),
   authConfirmInput: document.querySelector("#authConfirmInput"),
@@ -125,7 +127,7 @@ async function hashPassword(password) {
 }
 
 function hasAuthPassword() {
-  return Boolean(localStorage.getItem(AUTH_HASH_KEY));
+  return Boolean(localStorage.getItem(AUTH_USERNAME_KEY) && localStorage.getItem(AUTH_HASH_KEY));
 }
 
 function isAuthenticated() {
@@ -134,11 +136,11 @@ function isAuthenticated() {
 
 function updateAuthMode() {
   const setupMode = !hasAuthPassword();
-  els.authHint.textContent = setupMode ? "首次使用請先設定系統密碼。" : "請登入後使用系統。";
+  els.authHint.textContent = setupMode ? "首次使用請先設定共用帳號與密碼。" : "請輸入共用帳號與密碼。";
   els.authConfirmWrap.hidden = !setupMode;
   els.authConfirmInput.required = setupMode;
   els.authPasswordInput.autocomplete = setupMode ? "new-password" : "current-password";
-  els.authSubmitBtn.textContent = setupMode ? "設定密碼並登入" : "登入";
+  els.authSubmitBtn.textContent = setupMode ? "設定帳號密碼並登入" : "登入";
 }
 
 function setAuthenticated(value) {
@@ -149,28 +151,32 @@ function setAuthenticated(value) {
     sessionStorage.removeItem(AUTH_SESSION_KEY);
     document.body.classList.add("auth-locked");
     updateAuthMode();
+    els.authUsernameInput.value = "";
     els.authPasswordInput.value = "";
     els.authConfirmInput.value = "";
-    window.setTimeout(() => els.authPasswordInput.focus(), 0);
+    window.setTimeout(() => els.authUsernameInput.focus(), 0);
   }
 }
 
 async function handleAuthSubmit(event) {
   event.preventDefault();
+  const username = normalizeText(els.authUsernameInput.value);
   const password = els.authPasswordInput.value;
+  if (!username) return toast("請輸入帳號");
   if (password.length < 6) return toast("密碼至少需要 6 個字元");
 
   if (!hasAuthPassword()) {
     if (password !== els.authConfirmInput.value) return toast("兩次輸入的密碼不一致");
+    localStorage.setItem(AUTH_USERNAME_KEY, username);
     localStorage.setItem(AUTH_HASH_KEY, await hashPassword(password));
     setAuthenticated(true);
-    toast("密碼已設定");
+    toast("帳號密碼已設定");
     return;
   }
 
   const inputHash = await hashPassword(password);
-  if (inputHash !== localStorage.getItem(AUTH_HASH_KEY)) {
-    toast("密碼錯誤");
+  if (username !== localStorage.getItem(AUTH_USERNAME_KEY) || inputHash !== localStorage.getItem(AUTH_HASH_KEY)) {
+    toast("帳號或密碼錯誤");
     return;
   }
   setAuthenticated(true);
