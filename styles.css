@@ -397,6 +397,16 @@ button {
   margin-bottom: 16px;
 }
 
+.record-count {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  color: var(--muted);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .print-toolbar {
   grid-template-columns: 160px minmax(180px, 1fr) 160px 180px auto;
 }

@@ -6,7 +6,7 @@ const AUTH_SESSION_KEY = "fire-alarm-authenticated";
 const AUTH_SESSION_USERNAME_KEY = "fire-alarm-session-username";
 const AUTH_SESSION_HASH_KEY = "fire-alarm-session-hash";
 const EXPECTED_GAS_VERSION = "2026-06-19-8";
-const APP_ASSET_VERSION = "20260619-15";
+const APP_ASSET_VERSION = "20260620-1";
 const CLOUD_API_PARTS = [
   "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mv",
   "cy9BS2Z5Y2J6VGFzRTVvNXIwQ2R3ZVRaYkpKVzJ6bldF",
@@ -78,6 +78,7 @@ const els = {
   lastSaved: document.querySelector("#lastSaved"),
   searchInput: document.querySelector("#searchInput"),
   handlerFilter: document.querySelector("#handlerFilter"),
+  recordCount: document.querySelector("#recordCount"),
   recordBody: document.querySelector("#recordBody"),
   printMode: document.querySelector("#printMode"),
   printRecord: document.querySelector("#printRecord"),
@@ -585,6 +586,7 @@ function renderDashboard() {
 
 function renderRecords() {
   const records = getFilteredRecords().sort((a, b) => (b.serial || b.date).localeCompare(a.serial || a.date));
+  els.recordCount.textContent = `共 ${records.length} 筆資料`;
   els.recordBody.innerHTML = records.length
     ? records.map((record) => `
       <tr>
