@@ -1,8 +1,8 @@
 // 湖口分隊住警器紀錄系統 Google Apps Script
-// Version: 2026-06-19-5
+// Version: 2026-06-19-6
 // 說明：支援中文欄位、共用帳號登入、Google Sheet 雲端資料同步。
 
-const SCRIPT_VERSION = "2026-06-19-5";
+const SCRIPT_VERSION = "2026-06-19-6";
 const SPREADSHEET_ID = "";
 const APPLICATIONS_SHEET = "Applications";
 const SETTINGS_SHEET = "Settings";
@@ -82,6 +82,7 @@ function doPost(e) {
   try {
     assertAuth(payload.auth || {});
     if (action === "saveRecord") result = saveRecord(payload.record);
+    else if (action === "saveRecords") result = saveRecordsBatch(payload.records || []);
     else if (action === "deleteRecord") result = deleteRecord(payload.id);
     else if (action === "saveHandlers") result = saveHandlers(payload.handlers || []);
     else result = { ok: false, message: "Unknown action" };
@@ -200,6 +201,14 @@ function saveRecord(record) {
   return { ok: true };
 }
 
+function saveRecordsBatch(records) {
+  if (!Array.isArray(records)) throw new Error("匯入資料格式錯誤");
+  records.forEach(function(record) {
+    saveRecord(record);
+  });
+  return { ok: true, count: records.length };
+}
+
 function deleteRecord(id) {
   if (!id) throw new Error("缺少 id");
   const sheet = getSheet(APPLICATIONS_SHEET);
@@ -214,7 +223,7 @@ function saveHandlers(handlers) {
   const sheet = getSheet(SETTINGS_SHEET);
   const names = [...new Set(handlers.map((name) => String(name || "").trim()).filter(Boolean))];
   sheet.clearContents();
-  sheet.getRange(1, 1).setValue("handlers");
+  sheet.getRange(1, 1).setValue("受理人員");
   if (names.length) sheet.getRange(2, 1, names.length, 1).setValues(names.map((name) => [name]));
   return { ok: true };
 }

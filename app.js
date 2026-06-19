@@ -5,8 +5,8 @@ const AUTH_HASH_KEY = "fire-alarm-auth-hash";
 const AUTH_SESSION_KEY = "fire-alarm-authenticated";
 const AUTH_SESSION_USERNAME_KEY = "fire-alarm-session-username";
 const AUTH_SESSION_HASH_KEY = "fire-alarm-session-hash";
-const EXPECTED_GAS_VERSION = "2026-06-19-5";
-const APP_ASSET_VERSION = "20260619-7";
+const EXPECTED_GAS_VERSION = "2026-06-19-6";
+const APP_ASSET_VERSION = "20260619-8";
 const CLOUD_API_PARTS = [
   "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mv",
   "cy9BS2Z5Y2J6VGFzRTVvNXIwQ2R3ZVRaYkpKVzJ6bldF",
@@ -91,6 +91,7 @@ const els = {
   exportCsvBtn: document.querySelector("#exportCsvBtn"),
   exportJsonBtn: document.querySelector("#exportJsonBtn"),
   importJsonInput: document.querySelector("#importJsonInput"),
+  importLegacyInput: document.querySelector("#importLegacyInput"),
   clearBtn: document.querySelector("#clearBtn"),
   seedBtn: document.querySelector("#seedBtn"),
   copySummaryBtn: document.querySelector("#copySummaryBtn"),
@@ -320,6 +321,11 @@ async function syncHandlersToCloud() {
   window.setTimeout(() => loadCloudData({ silent: true }), 1200);
 }
 
+async function syncRecordsToCloud(records) {
+  await cloudPost("saveRecords", { auth: sessionAuthPayload(), records });
+  window.setTimeout(() => loadCloudData({ silent: true }), 1200);
+}
+
 async function hashPassword(password) {
   const bytes = new TextEncoder().encode(password);
   const hashBuffer = await crypto.subtle.digest("SHA-256", bytes);
@@ -466,7 +472,7 @@ function toDateInputValue(value) {
 }
 
 function normalizeText(value) {
-  return String(value || "").trim();
+  return String(value || "").replace(/^\uFEFF/, "").trim();
 }
 
 function uniqueNames(values) {
@@ -876,6 +882,148 @@ function importJson(file) {
   reader.readAsText(file);
 }
 
+async function importLegacyFile(file) {
+  if (!file) return;
+  try {
+    const rows = await readLegacyRows(file);
+    const records = legacyRowsToRecords(rows);
+    if (!records.length) {
+      toast("沒有找到可匯入的清單資料");
+      return;
+    }
+    const ok = confirm(`找到 ${records.length} 筆舊清單資料，是否匯入並同步到 Google Sheet？`);
+    if (!ok) return;
+
+    const merged = new Map(state.records.map((record) => [record.id, record]));
+    records.forEach((record) => merged.set(record.id, record));
+    state.records = Array.from(merged.values());
+    state.handlers = uniqueNames([...state.handlers, ...records.map((record) => record.handler).filter(Boolean)]);
+    saveRecords();
+    saveHandlers();
+    render();
+
+    await syncRecordsToCloud(records);
+    if (state.handlers.length) await syncHandlersToCloud();
+    toast(`已匯入 ${records.length} 筆舊清單並同步`);
+  } catch (error) {
+    toast(error.message || "舊清單匯入失敗");
+  } finally {
+    els.importLegacyInput.value = "";
+  }
+}
+
+async function readLegacyRows(file) {
+  const fileName = file.name.toLowerCase();
+  if (fileName.endsWith(".csv")) return parseCsv(await file.text());
+  if (!window.XLSX) throw new Error("Excel 匯入元件載入失敗，請確認網路可連到 CDN");
+  const buffer = await file.arrayBuffer();
+  const workbook = window.XLSX.read(buffer, { type: "array", cellDates: false });
+  const sheetName = workbook.SheetNames.find((name) => name.includes("資料彙整")) || workbook.SheetNames[0];
+  const sheet = workbook.Sheets[sheetName];
+  return window.XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+}
+
+function legacyRowsToRecords(rows) {
+  const table = rows.filter((row) => row.some((cell) => normalizeText(cell)));
+  if (!table.length) return [];
+  const headerIndex = table.findIndex((row) => row.some((cell) => normalizeText(cell) === "序號"));
+  if (headerIndex < 0) throw new Error("找不到「序號」標題列，請確認匯入的是資料彙整清單");
+  const headers = table[headerIndex].map((cell) => normalizeText(cell));
+  const dataRows = table.slice(headerIndex + 1);
+  return dataRows
+    .map((row) => legacyRowToRecord(headers, row))
+    .filter(Boolean);
+}
+
+function legacyRowToRecord(headers, row) {
+  const get = (...names) => {
+    for (const name of names) {
+      const index = headers.indexOf(name);
+      if (index >= 0) return normalizeText(row[index]);
+    }
+    return "";
+  };
+  const serial = get("序號");
+  const name = get("申請人姓名", "姓名");
+  if (!serial && !name) return null;
+  const methodParts = splitReceiveMethod(get("領取方式/位置", "領取方式"));
+  const now = new Date().toISOString();
+  const record = {
+    id: `legacy-${serial || name}`.replace(/[^\w\u4e00-\u9fa5-]/g, "-"),
+    date: dateFromSerial(serial) || todayString(),
+    serial,
+    name,
+    gender: get("性別"),
+    birth: get("出生年月日"),
+    nationalId: get("申請人身分證字號", "身分證字號", "國民身分證統一編號").toUpperCase(),
+    phone: get("申請人電話", "聯絡電話", "連絡電話"),
+    address: get("申請人地址", "完整地址", "地址") || "新竹縣湖口鄉",
+    homeStatus: get("場所狀況") || "自有住宅",
+    receiveMethod: methodParts.receiveMethod,
+    installLocation: methodParts.installLocation,
+    personTypes: splitMultiValue(get("人員類別")),
+    housingType: get("住宅類別"),
+    certificateNo: get("個認號碼", "個認編號") || "CFS",
+    handler: get("受理人員"),
+    status: get("狀態") || "未簽收",
+    note: get("備註"),
+    updatedAt: now,
+  };
+  return record;
+}
+
+function splitReceiveMethod(value) {
+  const text = normalizeText(value);
+  if (!text) return { receiveMethod: "自行領取", installLocation: "" };
+  const [method, location = ""] = text.split(/\s*[\/／]\s*/);
+  const receiveMethod = method.includes("到府") ? "到府安裝" : "自行領取";
+  return { receiveMethod, installLocation: normalizeText(location) };
+}
+
+function splitMultiValue(value) {
+  return normalizeText(value)
+    .split(/[、,，;；\s]+/)
+    .map((item) => normalizeText(item))
+    .filter(Boolean);
+}
+
+function dateFromSerial(serial) {
+  const match = String(serial || "").match(/^(\d{4})(\d{2})(\d{2})/);
+  if (!match) return "";
+  return `${match[1]}-${match[2]}-${match[3]}`;
+}
+
+function parseCsv(text) {
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let quoted = false;
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    const next = text[index + 1];
+    if (char === '"' && quoted && next === '"') {
+      cell += '"';
+      index += 1;
+    } else if (char === '"') {
+      quoted = !quoted;
+    } else if (char === "," && !quoted) {
+      row.push(cell);
+      cell = "";
+    } else if ((char === "\n" || char === "\r") && !quoted) {
+      if (char === "\r" && next === "\n") index += 1;
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = "";
+    } else {
+      cell += char;
+    }
+  }
+  row.push(cell);
+  rows.push(row);
+  return rows;
+}
+
 function copySummary() {
   const lines = [["住宅類別", "戶數", "自行領取", "到府安裝", "已簽收"]];
   Array.from(els.summaryBody.querySelectorAll("tr")).forEach((row) => {
@@ -979,6 +1127,7 @@ els.printBtn.addEventListener("click", () => {
 els.exportCsvBtn.addEventListener("click", exportCsv);
 els.exportJsonBtn.addEventListener("click", exportJson);
 els.importJsonInput.addEventListener("change", (event) => importJson(event.target.files[0]));
+els.importLegacyInput.addEventListener("change", (event) => importLegacyFile(event.target.files[0]));
 els.clearBtn.addEventListener("click", () => {
   if (!confirm("確定清除全部本機資料？請先確認已完成備份。")) return;
   state.records = [];

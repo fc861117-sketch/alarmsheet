@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>湖口分隊住警器紀錄系統</title>
-    <link rel="stylesheet" href="styles.css?v=20260619-7">
+    <link rel="stylesheet" href="styles.css?v=20260619-8">
   </head>
   <body class="auth-locked">
     <section class="auth-screen" id="authScreen">
@@ -221,6 +221,15 @@
               </label>
             </section>
 
+            <section class="panel">
+              <h3>匯入舊 Excel 清單</h3>
+              <p>可匯入原本檔案的「3.資料彙整」工作表，系統會合併資料並同步到 Google Sheet。</p>
+              <label class="file-drop">
+                <input id="importLegacyInput" type="file" accept=".xlsm,.xlsx,.xls,.csv,text/csv">
+                <span>選擇舊 Excel 或 CSV 清單</span>
+              </label>
+            </section>
+
             <section class="panel danger">
               <h3>清除本機資料</h3>
               <p>只清除此瀏覽器內資料，不影響已匯出檔案。</p>
@@ -315,6 +324,7 @@
     </dialog>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="app.js?v=20260619-7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="app.js?v=20260619-8"></script>
   </body>
 </html>
