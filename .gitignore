@@ -1,0 +1,16 @@
+# Local exports and backups may contain personal data.
+*.csv
+*.json
+*.xlsx
+*.xlsm
+*.xls
+
+# Local/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Dependency folders, in case the project is later converted to a build app.
+node_modules/
+dist/
+build/

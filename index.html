@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>住宅用火災警報器補助發放系統</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">警</div>
+          <div>
+            <h1>住警器補助發放</h1>
+            <p>申請建檔、清冊彙整、表單列印</p>
+          </div>
+        </div>
+
+        <nav class="nav" aria-label="主要功能">
+          <button class="nav-item active" data-view="dashboard" type="button"><span class="icon">▦</span><span>總覽</span></button>
+          <button class="nav-item" data-view="records" type="button"><span class="icon">☷</span><span>申請清單</span></button>
+          <button class="nav-item" data-view="print" type="button"><span class="icon">⎙</span><span>列印表單</span></button>
+          <button class="nav-item" data-view="settings" type="button"><span class="icon">⚙</span><span>設定</span></button>
+        </nav>
+
+        <div class="sidebar-note">
+          <strong>防誤改設計</strong>
+          <span>承辦人只填表單欄位，彙整與列印格式由系統產生。</span>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">新竹縣政府補助安裝住宅用火災警報器</p>
+            <h2 id="viewTitle">總覽</h2>
+          </div>
+          <div class="topbar-actions">
+            <button class="ghost-button" id="seedBtn" type="button" title="建立範例資料">範例資料</button>
+            <button class="primary-button" id="openFormBtn" type="button">新增申請</button>
+          </div>
+        </header>
+
+        <section class="view active" id="dashboardView" aria-labelledby="viewTitle">
+          <div class="stats-grid">
+            <article class="stat-card"><span>總申請戶數</span><strong id="statHouseholds">0</strong></article>
+            <article class="stat-card"><span>自行領取</span><strong id="statPickup">0</strong></article>
+            <article class="stat-card"><span>到府安裝</span><strong id="statInstall">0</strong></article>
+            <article class="stat-card"><span>已簽收</span><strong id="statSigned">0</strong></article>
+          </div>
+
+          <div class="dashboard-layout">
+            <section class="panel">
+              <div class="panel-heading">
+                <h3>住宅類別彙整</h3>
+                <button class="text-button" id="copySummaryBtn" type="button">複製彙整</button>
+              </div>
+              <div class="table-wrap compact">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>住宅類別</th>
+                      <th>戶數</th>
+                      <th>自行領取</th>
+                      <th>到府安裝</th>
+                      <th>已簽收</th>
+                    </tr>
+                  </thead>
+                  <tbody id="summaryBody"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading">
+                <h3>最近建檔</h3>
+                <span id="lastSaved">尚未儲存</span>
+              </div>
+              <div class="recent-list" id="recentList"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="recordsView">
+          <div class="toolbar">
+            <label class="search-box">
+              <span>搜尋</span>
+              <input id="searchInput" type="search" placeholder="姓名、身分證、地址、電話、個認號碼">
+            </label>
+            <label>
+              <span>狀態</span>
+              <select id="statusFilter">
+                <option value="all">全部</option>
+                <option value="未簽收">未簽收</option>
+                <option value="已簽收">已簽收</option>
+              </select>
+            </label>
+            <label>
+              <span>受理人員</span>
+              <input id="handlerFilter" type="text" placeholder="全部">
+            </label>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>序號</th>
+                  <th>姓名</th>
+                  <th>身分證</th>
+                  <th>地址</th>
+                  <th>電話</th>
+                  <th>領取方式</th>
+                  <th>人員類別</th>
+                  <th>住宅類別</th>
+                  <th>狀態</th>
+                  <th class="no-print">操作</th>
+                </tr>
+              </thead>
+              <tbody id="recordBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="view" id="printView">
+          <div class="print-tools no-print">
+            <div class="toolbar print-toolbar">
+              <label>
+                <span>列印類型</span>
+                <select id="printMode">
+                  <option value="application">補助申請表</option>
+                  <option value="list">簽收清冊</option>
+                </select>
+              </label>
+              <label>
+                <span>申請人</span>
+                <select id="printRecord"></select>
+              </label>
+              <label>
+                <span>清冊範圍</span>
+                <select id="printStatus">
+                  <option value="all">全部資料</option>
+                  <option value="未簽收">只列未簽收</option>
+                  <option value="已簽收">只列已簽收</option>
+                </select>
+              </label>
+              <label>
+                <span>承辦單位</span>
+                <input id="agencyInput" type="text" value="消防分隊">
+              </label>
+              <button class="primary-button" id="printBtn" type="button">列印</button>
+            </div>
+          </div>
+
+          <div class="print-sheet" id="printSheet">
+            <div id="applicationPrint"></div>
+            <div id="listPrint"></div>
+          </div>
+        </section>
+
+        <section class="view" id="settingsView">
+          <div class="settings-grid">
+            <section class="panel">
+              <h3>受理人員管理</h3>
+              <p>新增或刪除後，申請資料的受理人員下拉選單會同步更新。</p>
+              <div class="inline-form">
+                <label>
+                  <span>新增受理人員</span>
+                  <input id="newHandlerInput" type="text" placeholder="輸入姓名">
+                </label>
+                <button class="primary-button" id="addHandlerBtn" type="button">新增</button>
+              </div>
+              <div class="manager-list" id="handlerList"></div>
+            </section>
+
+            <section class="panel">
+              <h3>匯出資料</h3>
+              <p>CSV 供承辦人統計；JSON 作完整備份，可再匯回本系統。</p>
+              <div class="button-row">
+                <button class="primary-button" id="exportCsvBtn" type="button">匯出 CSV</button>
+                <button class="ghost-button" id="exportJsonBtn" type="button">匯出 JSON</button>
+              </div>
+            </section>
+
+            <section class="panel">
+              <h3>匯入備份</h3>
+              <p>匯入 JSON 會合併資料；相同編號更新，不重複新增。</p>
+              <label class="file-drop">
+                <input id="importJsonInput" type="file" accept="application/json">
+                <span>選擇 JSON 備份檔</span>
+              </label>
+            </section>
+
+            <section class="panel danger">
+              <h3>清除本機資料</h3>
+              <p>只清除此瀏覽器內資料，不影響已匯出檔案。</p>
+              <button class="danger-button" id="clearBtn" type="button">清除全部資料</button>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog class="record-dialog" id="recordDialog">
+      <form method="dialog" id="recordForm">
+        <div class="dialog-heading">
+          <h3 id="dialogTitle">新增申請資料</h3>
+          <button class="icon-button" data-cancel-form type="button" aria-label="關閉">×</button>
+        </div>
+
+        <input id="recordId" type="hidden">
+        <div class="form-grid">
+          <label><span>申請日期</span><input id="dateInput" type="date" required></label>
+          <label><span>序號</span><input id="serialInput" type="text" placeholder="例：20260513-1"></label>
+          <label><span>申請人姓名</span><input id="nameInput" type="text" required></label>
+          <label>
+            <span>性別</span>
+            <select id="genderInput"><option value="">未填</option><option>男</option><option>女</option></select>
+          </label>
+          <label><span>出生年月日</span><input id="birthInput" type="text" placeholder="例：民國56年3月15日"></label>
+          <label><span>身分證字號</span><input id="nationalIdInput" type="text" maxlength="10" placeholder="例：J123456789"></label>
+          <label><span>聯絡電話</span><input id="phoneInput" type="tel"></label>
+          <label><span>個認號碼</span><input id="certificateInput" type="text" placeholder="例：CFS1510171164"></label>
+          <label class="wide"><span>完整地址</span><input id="addressInput" type="text" required placeholder="例：新竹縣湖口鄉..."></label>
+          <label>
+            <span>場所狀況</span>
+            <select id="homeStatusInput"><option>自有住宅</option><option>租賃住宅</option></select>
+          </label>
+          <label>
+            <span>領取方式</span>
+            <select id="receiveMethodInput"><option>自行領取</option><option>到府安裝</option></select>
+          </label>
+          <label><span>安裝位置</span><input id="installLocationInput" type="text" placeholder="例：客廳"></label>
+          <label><span>受理人員</span><select id="handlerInput" required></select></label>
+          <label>
+            <span>狀態</span>
+            <select id="recordStatusInput"><option>未簽收</option><option>已簽收</option></select>
+          </label>
+
+          <fieldset class="wide check-group">
+            <legend>人員類別（可複選）</legend>
+            <label><input type="checkbox" name="personTypes" value="低收入戶">低收入戶</label>
+            <label><input type="checkbox" name="personTypes" value="身心障礙者">身心障礙者</label>
+            <label><input type="checkbox" name="personTypes" value="兒童(12歲以下)">兒童(12歲以下)</label>
+            <label><input type="checkbox" name="personTypes" value="孕婦">孕婦</label>
+            <label><input type="checkbox" name="personTypes" value="年長者(65歲以上)">年長者(65歲以上)</label>
+            <label><input type="checkbox" name="personTypes" value="獨居長者">獨居長者</label>
+          </fieldset>
+
+          <fieldset class="wide check-group">
+            <legend>住宅類別（單選）</legend>
+            <label><input type="radio" name="housingType" value="30年以上住宅">30年以上住宅</label>
+            <label><input type="radio" name="housingType" value="狹小巷弄地區">狹小巷弄地區</label>
+            <label><input type="radio" name="housingType" value="資源回收用途">資源回收用途</label>
+            <label><input type="radio" name="housingType" value="曾發生火災事故">曾發生火災事故</label>
+            <label><input type="radio" name="housingType" value="鐵皮屋住宅">鐵皮屋住宅</label>
+            <label><input type="radio" name="housingType" value="木造建築物">木造建築物</label>
+            <label><input type="radio" name="housingType" value="住宅式宮廟">住宅式宮廟</label>
+            <label><input type="radio" name="housingType" value="裝設鐵窗住宅">裝設鐵窗住宅</label>
+            <label><input type="radio" name="housingType" value="提供居家式托育服務住宅">提供居家式托育服務住宅</label>
+            <label><input type="radio" name="housingType" value="未設火災警報設備之住宅">未設火災警報設備之住宅</label>
+          </fieldset>
+
+          <label class="wide"><span>備註</span><textarea id="noteInput" rows="3" placeholder="例：需回訪、已協助安裝"></textarea></label>
+        </div>
+
+        <div class="dialog-actions">
+          <button class="ghost-button" data-cancel-form type="button">取消</button>
+          <button class="primary-button" id="saveRecordBtn" type="button">儲存</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
