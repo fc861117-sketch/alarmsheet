@@ -495,8 +495,6 @@ function setView(view) {
   els.navItems.forEach((item) => item.classList.toggle("active", item.dataset.view === view));
   Object.entries(els.views).forEach(([key, element]) => element.classList.toggle("active", key === view));
   els.viewTitle.textContent = viewTitles[view];
-  els.seedBtn.hidden = view !== "dashboard";
-  els.openFormBtn.hidden = view !== "dashboard";
   render();
 }
 

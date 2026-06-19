@@ -150,12 +150,18 @@ button {
 }
 
 .topbar-actions,
+.dashboard-actions,
 .button-row,
 .dialog-actions {
   display: flex;
   gap: 10px;
   align-items: center;
   flex-wrap: wrap;
+}
+
+.dashboard-actions {
+  justify-content: flex-end;
+  margin-bottom: 14px;
 }
 
 .primary-button,
@@ -735,11 +741,13 @@ td {
   }
 
   .topbar-actions,
+  .dashboard-actions,
   .button-row {
     width: 100%;
   }
 
   .topbar-actions button,
+  .dashboard-actions button,
   .button-row button {
     flex: 1;
   }
