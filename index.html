@@ -37,7 +37,7 @@
             <h2 id="viewTitle">總覽</h2>
           </div>
           <div class="topbar-actions">
-            <button class="ghost-button" id="seedBtn" type="button" title="建立範例資料">範例資料</button>
+            <button class="ghost-button" id="seedBtn" type="button" title="顯示列印範例">範例資料</button>
             <button class="primary-button" id="openFormBtn" type="button">新增申請</button>
           </div>
         </header>
@@ -270,6 +270,19 @@
           <button class="primary-button" id="saveRecordBtn" type="button">儲存</button>
         </div>
       </form>
+    </dialog>
+
+    <dialog class="sample-dialog" id="sampleDialog">
+      <div class="sample-dialog-inner">
+        <div class="dialog-heading no-print">
+          <h3>範例列印預覽</h3>
+          <button class="icon-button" id="closeSampleBtn" type="button" aria-label="關閉">×</button>
+        </div>
+        <div class="sample-actions no-print">
+          <button class="primary-button" id="printSampleBtn" type="button">列印範例</button>
+        </div>
+        <div class="print-sheet" id="samplePrint"></div>
+      </div>
     </dialog>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>

@@ -491,6 +491,31 @@ td {
   background: rgba(16, 34, 28, 0.48);
 }
 
+.sample-dialog {
+  width: min(1040px, calc(100vw - 28px));
+  max-height: calc(100vh - 28px);
+  border: 0;
+  border-radius: 8px;
+  padding: 0;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+}
+
+.sample-dialog::backdrop {
+  background: rgba(16, 34, 28, 0.48);
+}
+
+.sample-dialog-inner {
+  padding: 20px;
+  max-height: calc(100vh - 28px);
+  overflow: auto;
+}
+
+.sample-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
 .record-dialog form {
   padding: 20px;
 }
@@ -762,5 +787,29 @@ td {
   td {
     padding: 6px;
     border: 1px solid #000;
+  }
+
+  body.sample-printing .app-shell {
+    display: none !important;
+  }
+
+  body.sample-printing .sample-dialog {
+    display: block !important;
+    position: static;
+    width: auto;
+    max-height: none;
+    box-shadow: none;
+    border: 0;
+    padding: 0;
+  }
+
+  body.sample-printing .sample-dialog-inner {
+    padding: 0;
+    max-height: none;
+    overflow: visible;
+  }
+
+  body.sample-printing .sample-dialog::backdrop {
+    display: none;
   }
 }

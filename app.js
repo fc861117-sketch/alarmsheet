@@ -70,6 +70,10 @@ const els = {
   newHandlerInput: document.querySelector("#newHandlerInput"),
   addHandlerBtn: document.querySelector("#addHandlerBtn"),
   handlerList: document.querySelector("#handlerList"),
+  sampleDialog: document.querySelector("#sampleDialog"),
+  samplePrint: document.querySelector("#samplePrint"),
+  closeSampleBtn: document.querySelector("#closeSampleBtn"),
+  printSampleBtn: document.querySelector("#printSampleBtn"),
   toast: document.querySelector("#toast"),
 };
 
@@ -300,7 +304,11 @@ function renderApplicationPrint() {
     return;
   }
 
-  els.applicationPrint.innerHTML = `
+  els.applicationPrint.innerHTML = applicationFormMarkup(record);
+}
+
+function applicationFormMarkup(record) {
+  return `
     <div class="application-form">
       <div class="form-title">
         <h3>新竹縣政府補助安裝住宅用火災警報器申請表</h3>
@@ -538,57 +546,29 @@ function copySummary() {
 }
 
 function seedRecords() {
-  if (state.records.length && !confirm("已有資料，仍要加入範例資料嗎？")) return;
-  const now = new Date().toISOString();
-  state.records.push(
-    {
-      id: crypto.randomUUID(),
-      date: "2026-05-13",
-      serial: "20260513-1",
-      name: "吳政鴻",
-      gender: "男",
-      birth: "民國76年9月7日",
-      nationalId: "E22357070",
-      phone: "0988-092-755",
-      address: "新竹縣湖口鄉新興路766巷13號",
-      homeStatus: "自有住宅",
-      receiveMethod: "自行領取",
-      installLocation: "客廳",
-      personTypes: ["獨居長者"],
-      housingType: "未設火災警報設備之住宅",
-      certificateNo: "CFS1510171164",
-      handler: "謝元豪",
-      status: "未簽收",
-      note: "",
-      updatedAt: now,
-    },
-    {
-      id: crypto.randomUUID(),
-      date: "2026-05-17",
-      serial: "20260517-10",
-      name: "涂煜生",
-      gender: "男",
-      birth: "民國048年08月01日",
-      nationalId: "Q120364545",
-      phone: "0982-875-258",
-      address: "新竹縣湖口鄉成功路184號",
-      homeStatus: "自有住宅",
-      receiveMethod: "自行領取",
-      installLocation: "",
-      personTypes: ["年長者(65歲以上)", "低收入戶"],
-      housingType: "未設火災警報設備之住宅",
-      certificateNo: "CFS1510171152",
-      handler: "尤碩楷",
-      status: "未簽收",
-      note: "",
-      updatedAt: now,
-    }
-  );
-  state.handlers = uniqueNames([...state.handlers, "謝元豪", "尤碩楷"]);
-  saveHandlers();
-  saveRecords();
-  render();
-  toast("範例資料已建立");
+  const sampleRecord = {
+    id: "sample",
+    date: todayString(),
+    serial: `${todayString().replaceAll("-", "")}-範例`,
+    name: "王小明",
+    gender: "男",
+    birth: "民國65年01月01日",
+    nationalId: "A123456789",
+    phone: "0912-345-678",
+    address: "新竹縣湖口鄉範例路100號",
+    homeStatus: "自有住宅",
+    receiveMethod: "自行領取",
+    installLocation: "客廳",
+    personTypes: ["年長者(65歲以上)"],
+    housingType: "未設火災警報設備之住宅",
+    certificateNo: "CFS0000000000",
+    handler: state.handlers[0] || "受理人員",
+    status: "未簽收",
+    note: "",
+    updatedAt: new Date().toISOString(),
+  };
+  els.samplePrint.innerHTML = applicationFormMarkup(sampleRecord);
+  els.sampleDialog.showModal();
 }
 
 function downloadFile(filename, content, type) {
@@ -661,6 +641,16 @@ els.clearBtn.addEventListener("click", () => {
   toast("本機資料已清除");
 });
 els.seedBtn.addEventListener("click", seedRecords);
+els.closeSampleBtn.addEventListener("click", () => els.sampleDialog.close());
+els.sampleDialog.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  els.sampleDialog.close();
+});
+els.printSampleBtn.addEventListener("click", () => {
+  document.body.classList.add("sample-printing");
+  window.print();
+});
+window.addEventListener("afterprint", () => document.body.classList.remove("sample-printing"));
 els.copySummaryBtn.addEventListener("click", copySummary);
 els.recordBody.addEventListener("click", (event) => {
   const editId = event.target.dataset.edit;
