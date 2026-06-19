@@ -626,6 +626,28 @@ td {
 
 .application-form {
   color: #000;
+  position: relative;
+  overflow: hidden;
+}
+
+.sample-watermark::before {
+  content: "範例文件";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgba(181, 54, 54, 0.14);
+  font-size: 86px;
+  font-weight: 900;
+  letter-spacing: 0;
+  transform: rotate(-28deg);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.sample-watermark > * {
+  position: relative;
+  z-index: 1;
 }
 
 .form-title {

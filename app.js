@@ -307,9 +307,10 @@ function renderApplicationPrint() {
   els.applicationPrint.innerHTML = applicationFormMarkup(record);
 }
 
-function applicationFormMarkup(record) {
+function applicationFormMarkup(record, options = {}) {
+  const sampleClass = options.sample ? " sample-watermark" : "";
   return `
-    <div class="application-form">
+    <div class="application-form${sampleClass}">
       <div class="form-title">
         <h3>新竹縣政府補助安裝住宅用火災警報器申請表</h3>
         <p>${escapeHtml(formatDate(record.date))}</p>
@@ -565,7 +566,7 @@ function seedRecords() {
     note: "",
     updatedAt: new Date().toISOString(),
   };
-  els.samplePrint.innerHTML = applicationFormMarkup(sampleRecord);
+  els.samplePrint.innerHTML = applicationFormMarkup(sampleRecord, { sample: true });
   els.sampleDialog.showModal();
 }
 
