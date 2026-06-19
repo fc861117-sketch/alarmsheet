@@ -1,7 +1,8 @@
 // 湖口分隊住警器紀錄系統 Google Apps Script
-// Version: 2026-06-19-4
+// Version: 2026-06-19-5
 // 說明：支援中文欄位、共用帳號登入、Google Sheet 雲端資料同步。
 
+const SCRIPT_VERSION = "2026-06-19-5";
 const SPREADSHEET_ID = "";
 const APPLICATIONS_SHEET = "Applications";
 const SETTINGS_SHEET = "Settings";
@@ -67,6 +68,7 @@ function doGet(e) {
     result = { ok: false, message: error.message };
   }
 
+  result = withVersion(result);
   return ContentService
     .createTextOutput(`${callback}(${JSON.stringify(result)})`)
     .setMimeType(ContentService.MimeType.JAVASCRIPT);
@@ -87,6 +89,7 @@ function doPost(e) {
     result = { ok: false, message: error.message };
   }
 
+  result = withVersion(result);
   return ContentService
     .createTextOutput(JSON.stringify(result))
     .setMimeType(ContentService.MimeType.JSON);
@@ -100,6 +103,12 @@ function meta() {
     ok: true,
     hasCredentials: Boolean(props.getProperty(USERNAME_KEY) && props.getProperty(PASSWORD_HASH_KEY)),
   };
+}
+
+function withVersion(result) {
+  const output = result || {};
+  output.version = SCRIPT_VERSION;
+  return output;
 }
 
 function setupCredentials(params) {

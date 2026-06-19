@@ -5,6 +5,7 @@ const AUTH_HASH_KEY = "fire-alarm-auth-hash";
 const AUTH_SESSION_KEY = "fire-alarm-authenticated";
 const AUTH_SESSION_USERNAME_KEY = "fire-alarm-session-username";
 const AUTH_SESSION_HASH_KEY = "fire-alarm-session-hash";
+const EXPECTED_GAS_VERSION = "2026-06-19-5";
 const CLOUD_API_PARTS = [
   "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mv",
   "cy9BS2Z5Y2J6VGFzRTVvNXIwQ2R3ZVRaYkpKVzJ6bldF",
@@ -38,6 +39,7 @@ const els = {
   authScreen: document.querySelector("#authScreen"),
   authForm: document.querySelector("#authForm"),
   authHint: document.querySelector("#authHint"),
+  authStatus: document.querySelector("#authStatus"),
   authUsernameInput: document.querySelector("#authUsernameInput"),
   authPasswordInput: document.querySelector("#authPasswordInput"),
   authConfirmWrap: document.querySelector("#authConfirmWrap"),
@@ -156,6 +158,7 @@ function cloudGet(action, params = {}) {
     const url = new URL(cloudApiUrl());
     url.searchParams.set("action", action);
     url.searchParams.set("callback", callbackName);
+    url.searchParams.set("_", String(Date.now()));
     Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, String(value ?? "")));
     script.onerror = () => {
       cleanup();
@@ -182,6 +185,7 @@ async function initializeCloud() {
     const result = await cloudGet("meta");
     state.cloudReady = true;
     state.cloudSetupRequired = !result.hasCredentials;
+    updateCloudStatus(result);
 
     if (state.cloudSetupRequired) {
       await migrateLocalCredentialsToCloud();
@@ -190,7 +194,9 @@ async function initializeCloud() {
     updateAuthMode();
     if (isAuthenticated()) {
       restoreSessionAuthFromLocal();
-      setAuthenticated(true);
+      const sessionValid = await validateSessionAuth();
+      if (!sessionValid) return;
+      setAuthenticated(true, sessionAuthPayload());
       await loadCloudData();
     } else {
       setAuthenticated(false);
@@ -198,10 +204,36 @@ async function initializeCloud() {
   } catch (error) {
     state.cloudReady = false;
     state.cloudSetupRequired = false;
+    updateCloudStatus(null);
     updateAuthMode();
     setAuthenticated(false);
     toast("無法連線雲端資料，請稍後再試");
   }
+}
+
+function updateCloudStatus(meta) {
+  if (!els.authStatus) return;
+  if (!meta) {
+    els.authStatus.textContent = "雲端連線失敗，請確認 Apps Script Web App 部署。";
+    return;
+  }
+  const version = meta.version || "未回傳版本";
+  const credentialText = meta.hasCredentials ? "已設定共用帳號" : "尚未設定共用帳號";
+  const warning = version === EXPECTED_GAS_VERSION ? "" : "，請確認 GAS 已貼上最新版並重新部署";
+  els.authStatus.textContent = `GAS 版本：${version}，${credentialText}${warning}`;
+}
+
+async function validateSessionAuth() {
+  const auth = sessionAuthPayload();
+  if (!auth.username || !auth.passwordHash) {
+    setAuthenticated(false);
+    return false;
+  }
+  const result = await cloudGet("login", auth);
+  if (result.ok) return true;
+  setAuthenticated(false);
+  toast(authErrorMessage(result));
+  return false;
 }
 
 async function migrateLocalCredentialsToCloud() {
@@ -211,6 +243,7 @@ async function migrateLocalCredentialsToCloud() {
   const result = await cloudGet("setup", { username, passwordHash });
   if (result.ok) {
     state.cloudSetupRequired = false;
+    updateCloudStatus({ version: result.version, hasCredentials: true });
     toast("已將本機帳號同步到雲端");
   }
 }
@@ -302,6 +335,16 @@ function updateAuthMode() {
   els.authSubmitBtn.textContent = setupMode ? "設定帳號密碼並登入" : "登入";
 }
 
+function authErrorMessage(result) {
+  if (!result || !result.version) {
+    return "GAS 未回傳新版資訊，請確認已重新部署 Web App 且網址相同";
+  }
+  if (result.version !== EXPECTED_GAS_VERSION) {
+    return `GAS 版本為 ${result.version}，請更新並重新部署到 ${EXPECTED_GAS_VERSION}`;
+  }
+  return result.message || "帳號或密碼錯誤";
+}
+
 function setAuthenticated(value, auth = null) {
   if (value) {
     sessionStorage.setItem(AUTH_SESSION_KEY, "true");
@@ -347,7 +390,7 @@ async function handleAuthSubmit(event) {
   }
 
   const result = await cloudGet("login", { username, passwordHash });
-  if (!result.ok) return toast(result.message || "帳號或密碼錯誤");
+  if (!result.ok) return toast(authErrorMessage(result));
   localStorage.setItem(AUTH_USERNAME_KEY, username);
   localStorage.setItem(AUTH_HASH_KEY, passwordHash);
   setAuthenticated(true, { username, passwordHash });

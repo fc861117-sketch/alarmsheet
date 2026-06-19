@@ -59,6 +59,13 @@ body.auth-locked .app-shell {
   color: var(--muted);
 }
 
+.auth-status {
+  margin: -4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 button,
 input,
 select,
