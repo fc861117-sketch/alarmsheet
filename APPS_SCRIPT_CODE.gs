@@ -1,5 +1,5 @@
 // 湖口分隊住警器紀錄系統 Google Apps Script
-// Version: 2026-06-19-3
+// Version: 2026-06-19-4
 // 說明：支援中文欄位、共用帳號登入、Google Sheet 雲端資料同步。
 
 const SPREADSHEET_ID = "";
@@ -95,6 +95,7 @@ function doPost(e) {
 function meta() {
   ensureSheets();
   const props = PropertiesService.getScriptProperties();
+  normalizeStoredPassword(props);
   return {
     ok: true,
     hasCredentials: Boolean(props.getProperty(USERNAME_KEY) && props.getProperty(PASSWORD_HASH_KEY)),
@@ -133,11 +134,40 @@ function getData(auth) {
 function assertAuth(auth) {
   const props = PropertiesService.getScriptProperties();
   const username = props.getProperty(USERNAME_KEY);
-  const passwordHash = props.getProperty(PASSWORD_HASH_KEY);
-  if (!username || !passwordHash) throw new Error("尚未設定帳號密碼");
-  if (String(auth.username || "") !== username || String(auth.passwordHash || "") !== passwordHash) {
+  const storedPassword = normalizeStoredPassword(props);
+  const suppliedUsername = String(auth.username || "");
+  const suppliedHash = String(auth.passwordHash || "").trim();
+  if (!username || !storedPassword) throw new Error("尚未設定帳號密碼");
+  if (suppliedUsername !== username || suppliedHash !== storedPassword) {
     throw new Error("帳號或密碼錯誤");
   }
+}
+
+function normalizeStoredPassword(props) {
+  const storedPassword = String(props.getProperty(PASSWORD_HASH_KEY) || "");
+  if (!storedPassword || isSha256Hex(storedPassword)) return storedPassword;
+  const passwordHash = hashPassword(storedPassword);
+  if (passwordHash) {
+    props.setProperty(PASSWORD_HASH_KEY, passwordHash);
+  }
+  return passwordHash;
+}
+
+function hashPassword(password) {
+  if (!password) return "";
+  const digest = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256,
+    String(password),
+    Utilities.Charset.UTF_8
+  );
+  return digest.map(function(byte) {
+    const value = byte < 0 ? byte + 256 : byte;
+    return ("0" + value.toString(16)).slice(-2);
+  }).join("");
+}
+
+function isSha256Hex(value) {
+  return /^[a-f0-9]{64}$/i.test(String(value || ""));
 }
 
 function saveRecord(record) {

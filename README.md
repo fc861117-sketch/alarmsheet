@@ -38,7 +38,14 @@
 
 注意：前端 URL 混淆不是完整資安防護，瀏覽器執行時仍會還原 URL。系統安全主要依賴 Apps Script 端的共用帳號密碼驗證。
 
-若其他裝置無法用同一組帳號密碼登入，請確認 Apps Script 已貼上最新版 `APPS_SCRIPT_CODE.gs`，並且已重新部署 Web App。
+若其他裝置無法用同一組帳號密碼登入，請確認 Apps Script 已貼上最新版 `APPS_SCRIPT_CODE.gs`，並且已重新部署 Web App。最新版檔案上方會顯示 `Version: 2026-06-19-4`。
+
+Apps Script 的 Script Properties 會使用：
+
+- `sharedUsername`：共用帳號
+- `sharedPasswordHash`：共用密碼的 SHA-256 雜湊值
+
+若 `sharedPasswordHash` 不小心填成一般明碼密碼，`Version: 2026-06-19-4` 會在網站讀取 GAS 設定時自動轉成雜湊值，不需要手動計算。
 
 若帳號是在早期本機版設定，請先用原本那台裝置開啟最新版網站一次。系統會自動把本機帳號同步到 GAS，之後其他裝置即可用同一組登入。
 
