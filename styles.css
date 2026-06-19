@@ -710,7 +710,7 @@ td {
   transform: translateY(0);
 }
 
-.application-form {
+.application-page {
   color: #000;
   position: relative;
   overflow: hidden;
@@ -736,17 +736,36 @@ td {
   z-index: 1;
 }
 
-.form-title {
+.pdf-form-title {
   display: flex;
   justify-content: space-between;
   gap: 16px;
   align-items: flex-end;
-  margin-bottom: 12px;
+  margin: 0 0 4px;
 }
 
-.form-title h3,
-.form-title p {
+.pdf-form-title h3,
+.pdf-form-title p {
   margin: 0;
+}
+
+.pdf-form-title h3 {
+  flex: 1;
+  text-align: center;
+  font-size: 24px;
+  letter-spacing: 0;
+}
+
+.pdf-form-title p {
+  min-width: 180px;
+  text-align: right;
+  font-size: 16px;
+}
+
+.application-form {
+  color: #000;
+  position: relative;
+  overflow: hidden;
 }
 
 .application-table {
@@ -757,7 +776,7 @@ td {
 .application-table th,
 .application-table td {
   border: 1px solid #000;
-  padding: 8px;
+  padding: 6px 8px;
   color: #000;
   background: #fff;
 }
@@ -765,6 +784,66 @@ td {
 .application-table th {
   text-align: center;
   font-weight: 700;
+}
+
+.pdf-application-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 18px;
+  line-height: 1.45;
+}
+
+.pdf-application-table .col-side {
+  width: 6%;
+}
+
+.pdf-application-table .col-label {
+  width: 16%;
+}
+
+.pdf-application-table .col-main {
+  width: 23%;
+}
+
+.pdf-application-table .col-label-sm {
+  width: 8%;
+}
+
+.pdf-application-table .col-sex {
+  width: 8%;
+}
+
+.vertical-title {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: 0.3em;
+  font-size: 20px;
+}
+
+.pdf-application-table small {
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.signature-note {
+  height: 96px;
+  vertical-align: top;
+}
+
+.option-grid {
+  display: grid;
+  gap: 3px 22px;
+}
+
+.option-grid.two-col {
+  grid-template-columns: 1fr 1fr;
+}
+
+.footer-cell {
+  height: 56px;
+  font-size: 18px;
+  vertical-align: top;
 }
 
 .signature-box {

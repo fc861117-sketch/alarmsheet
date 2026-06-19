@@ -6,7 +6,7 @@ const AUTH_SESSION_KEY = "fire-alarm-authenticated";
 const AUTH_SESSION_USERNAME_KEY = "fire-alarm-session-username";
 const AUTH_SESSION_HASH_KEY = "fire-alarm-session-hash";
 const EXPECTED_GAS_VERSION = "2026-06-19-8";
-const APP_ASSET_VERSION = "20260620-4";
+const APP_ASSET_VERSION = "20260620-5";
 const CLOUD_API_PARTS = [
   "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mv",
   "cy9BS2Z5Y2J6VGFzRTVvNXIwQ2R3ZVRaYkpKVzJ6bldF",
@@ -642,23 +642,73 @@ function renderApplicationPrint() {
 
 function applicationFormMarkup(record, options = {}) {
   const sampleClass = options.sample ? " sample-watermark" : "";
+  const form = singleApplicationFormMarkup(record);
   return `
-    <div class="application-form${sampleClass}">
-      <div class="form-title">
-        <h3>新竹縣政府補助安裝住宅用火災警報器申請表</h3>
-        <p>領取日期：${escapeHtml(formatDate(record.date))}</p>
-      </div>
-      <table class="application-table">
-        <tr><th rowspan="7">申請人資料</th><th>姓名</th><td>${escapeHtml(record.name)}</td><th>性別</th><td>${checkPair(record.gender, "男", "女")}</td><th>出生年月日</th><td>${escapeHtml(record.birth)}</td></tr>
-        <tr><th>國民身分證統一編號</th><td colspan="3">${escapeHtml(record.nationalId)}</td><th>連絡電話</th><td>${escapeHtml(record.phone)}</td></tr>
-        <tr><th>申請裝設地點</th><td colspan="5">${escapeHtml(record.address)}</td></tr>
-        <tr><th>場所狀況</th><td colspan="2">${checkPair(record.homeStatus, "自有住宅", "租賃住宅")}</td><th>申請領取方式</th><td colspan="2">${checkPair(record.receiveMethod, "自行領取", "到府安裝")}　安裝位置：${escapeHtml(record.installLocation)}</td></tr>
-        <tr><th>人員類別</th><td colspan="5">${checkboxLine(record.personTypes, ["低收入戶", "身心障礙者", "兒童(12歲以下)", "孕婦", "年長者(65歲以上)", "獨居長者"])}</td></tr>
-        <tr><th>住宅類別</th><td colspan="5">${checkboxLine([record.housingType], ["30年以上住宅", "狹小巷弄地區", "資源回收用途", "曾發生火災事故", "鐵皮屋住宅", "木造建築物", "住宅式宮廟", "裝設鐵窗住宅", "提供居家式托育服務住宅", "未設火災警報設備之住宅"])}</td></tr>
-        <tr><th>申請人簽章</th><td colspan="5" class="signature-box">如代理代簽請註明身分證。本人同意個資供補助案使用。</td></tr>
-        <tr><th>受理/執行人員</th><td colspan="2">${escapeHtml(record.handler)}</td><th>分隊長</th><td>單柏洋</td><th>個認號碼</th><td>${escapeHtml(record.certificateNo)}</td></tr>
-      </table>
+    <div class="application-page${sampleClass}">
+      ${form}
     </div>
+  `;
+}
+
+function singleApplicationFormMarkup(record) {
+  return `
+    <section class="application-form">
+      <div class="pdf-form-title">
+        <h3>新竹縣政府補助安裝住宅用火災警報器申請表</h3>
+        <p>日期：${escapeHtml(formatDate(record.date))}</p>
+      </div>
+      <table class="application-table pdf-application-table">
+        <colgroup>
+          <col class="col-side">
+          <col class="col-label">
+          <col class="col-main">
+          <col class="col-label-sm">
+          <col class="col-sex">
+          <col class="col-label-sm">
+          <col class="col-main">
+        </colgroup>
+        <tr>
+          <th rowspan="7" class="vertical-title">申請人資料</th>
+          <th>姓名</th>
+          <td>${escapeHtml(record.name)}</td>
+          <th>性別</th>
+          <td>${checkStack(record.gender, ["男", "女"])}</td>
+          <th>出生年月日</th>
+          <td>${escapeHtml(formatDate(record.birth))}</td>
+        </tr>
+        <tr>
+          <th>國民身分證<br>統一編號</th>
+          <td colspan="3">${escapeHtml(record.nationalId)}</td>
+          <th>連絡電話</th>
+          <td>${escapeHtml(record.phone)}</td>
+        </tr>
+        <tr>
+          <th>申請<br>裝設地點</th>
+          <td colspan="5">${escapeHtml(record.address)}</td>
+        </tr>
+        <tr>
+          <th>場所狀況<br><small>（公所補助款<br>須設籍者）</small></th>
+          <td>${checkStack(record.homeStatus, ["自有住宅", "租賃住宅"])}</td>
+          <td colspan="2">${checkStack(record.receiveMethod, ["自行領取", "到府安裝"])}<div>安裝位置：${escapeHtml(record.installLocation)}</div></td>
+          <td colspan="2" class="signature-note">申請人簽章：________________<br><small>（如為代理人代簽，請註明身分證統一編號）本表資料涉個資部份，本人同意供新竹縣政府辦理補助案運用。</small></td>
+        </tr>
+        <tr>
+          <th rowspan="3">申請類別<br>（可複選）</th>
+          <th>人員類別</th>
+          <td colspan="5" class="option-grid two-col">${checkboxItems(record.personTypes, ["低收入戶", "孕婦", "身心障礙者", "年長者(65歲以上)", "兒童(12歲以下)", "獨居長者"])}</td>
+        </tr>
+        <tr>
+          <th rowspan="2">住宅類別</th>
+          <td colspan="5" class="option-grid two-col">${checkboxItems([record.housingType], ["鐵皮屋住宅", "30年以上住宅", "木造建築物", "狹小巷弄地區", "住宅式宮廟", "資源回收用途", "裝設鐵窗住宅", "曾發生火災事故", "提供居家式托育服務住宅", "未設火警自動警報設備之住宅"])}</td>
+        </tr>
+        <tr></tr>
+        <tr>
+          <td colspan="3" class="footer-cell">受理/執行人員：${escapeHtml(record.handler)}</td>
+          <td colspan="3" class="footer-cell">分隊長：單柏洋</td>
+          <td class="footer-cell">個認號碼<br>${escapeHtml(record.certificateNo)}</td>
+        </tr>
+      </table>
+    </section>
   `;
 }
 
@@ -730,6 +780,14 @@ function checkPair(value, first, second) {
 
 function checkboxLine(values, options) {
   return options.map((option) => `${values.includes(option) ? "■" : "□"}${escapeHtml(option)}`).join("　");
+}
+
+function checkboxItems(values, options) {
+  return options.map((option) => `<span>${values.includes(option) ? "☑" : "☐"}${escapeHtml(option)}</span>`).join("");
+}
+
+function checkStack(value, options) {
+  return options.map((option) => `<div>${value === option ? "☑" : "☐"}${escapeHtml(option)}</div>`).join("");
 }
 
 function openForm(record = null) {
