@@ -102,6 +102,10 @@ const els = {
   toast: document.querySelector("#toast"),
 };
 
+if (els.authStatus) {
+  els.authStatus.textContent = "正在連線 Google Sheet 雲端資料...";
+}
+
 const viewTitles = {
   dashboard: "總覽",
   records: "申請清單",
