@@ -24,6 +24,7 @@ const state = {
   currentView: "dashboard",
   cloudSetupRequired: false,
   cloudReady: false,
+  cloudSyncTimer: null,
 };
 
 const els = {
@@ -197,30 +198,49 @@ async function initializeCloud() {
   }
 }
 
-async function loadCloudData() {
-  const result = await cloudGet("data", sessionAuthPayload());
-  if (!result.ok) {
-    setAuthenticated(false);
-    toast(result.message || "雲端資料讀取失敗");
-    return;
+function startCloudSync() {
+  stopCloudSync();
+  state.cloudSyncTimer = window.setInterval(() => loadCloudData({ silent: true }), 10000);
+}
+
+function stopCloudSync() {
+  if (!state.cloudSyncTimer) return;
+  window.clearInterval(state.cloudSyncTimer);
+  state.cloudSyncTimer = null;
+}
+
+async function loadCloudData(options = {}) {
+  try {
+    const result = await cloudGet("data", sessionAuthPayload());
+    if (!result.ok) {
+      if (!options.silent) toast(result.message || "雲端資料讀取失敗");
+      setAuthenticated(false);
+      return;
+    }
+    state.records = migrateRecords(result.records || []);
+    state.handlers = uniqueNames([...(result.handlers || []), ...defaultHandlers]);
+    saveRecords();
+    saveHandlers();
+    render();
+    if (!options.silent) toast("已同步雲端資料");
+  } catch {
+    if (!options.silent) toast("雲端資料同步失敗，請檢查網路或 Apps Script 部署");
   }
-  state.records = migrateRecords(result.records || []);
-  state.handlers = uniqueNames([...(result.handlers || []), ...defaultHandlers]);
-  saveRecords();
-  saveHandlers();
-  render();
 }
 
 async function syncRecordToCloud(record) {
   await cloudPost("saveRecord", { auth: sessionAuthPayload(), record });
+  window.setTimeout(() => loadCloudData({ silent: true }), 1200);
 }
 
 async function syncDeleteRecordToCloud(id) {
   await cloudPost("deleteRecord", { auth: sessionAuthPayload(), id });
+  window.setTimeout(() => loadCloudData({ silent: true }), 1200);
 }
 
 async function syncHandlersToCloud() {
   await cloudPost("saveHandlers", { auth: sessionAuthPayload(), handlers: state.handlers });
+  window.setTimeout(() => loadCloudData({ silent: true }), 1200);
 }
 
 async function hashPassword(password) {
@@ -263,7 +283,9 @@ function setAuthenticated(value, auth = null) {
       sessionStorage.setItem(AUTH_SESSION_HASH_KEY, auth.passwordHash);
     }
     document.body.classList.remove("auth-locked");
+    startCloudSync();
   } else {
+    stopCloudSync();
     sessionStorage.removeItem(AUTH_SESSION_KEY);
     sessionStorage.removeItem(AUTH_SESSION_USERNAME_KEY);
     sessionStorage.removeItem(AUTH_SESSION_HASH_KEY);
@@ -888,6 +910,12 @@ els.printSampleBtn.addEventListener("click", () => {
   window.print();
 });
 window.addEventListener("afterprint", () => document.body.classList.remove("sample-printing"));
+window.addEventListener("focus", () => {
+  if (isAuthenticated()) loadCloudData({ silent: true });
+});
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && isAuthenticated()) loadCloudData({ silent: true });
+});
 els.copySummaryBtn.addEventListener("click", copySummary);
 els.recordBody.addEventListener("click", (event) => {
   const editId = event.target.dataset.edit;

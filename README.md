@@ -23,6 +23,8 @@
 
 目前資料會同步送到 Google Sheet，瀏覽器本機也會保留快取。若網路或 Apps Script 暫時失敗，系統會先保存本機資料並提示同步失敗。
 
+登入成功後，系統會每 10 秒從 Google Sheet 重新讀取資料一次；切回網頁時也會自動同步，因此多台裝置會接近即時更新目前發放狀況。
+
 ## Google Sheet 同步設定
 
 1. 開啟目標 Google Sheet。
@@ -35,6 +37,8 @@
 6. 將 Web App URL 以 Base64 分段方式填入 `app.js` 的 `CLOUD_API_PARTS`。
 
 注意：前端 URL 混淆不是完整資安防護，瀏覽器執行時仍會還原 URL。系統安全主要依賴 Apps Script 端的共用帳號密碼驗證。
+
+若其他裝置無法用同一組帳號密碼登入，請確認 Apps Script 已貼上最新版 `APPS_SCRIPT_CODE.gs`，並且已重新部署 Web App。
 
 ## GitHub Pages
 
