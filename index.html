@@ -238,28 +238,28 @@
 
         <input id="recordId" type="hidden">
         <div class="form-grid">
-          <label><span>申請日期</span><input id="dateInput" type="date" required></label>
-          <label><span>序號</span><input id="serialInput" type="text" placeholder="例：20260513-1" required></label>
-          <label><span>申請人姓名</span><input id="nameInput" type="text" required></label>
-          <label>
+          <label class="required"><span>申請日期</span><input id="dateInput" type="date" required></label>
+          <label class="required"><span>序號</span><input id="serialInput" type="text" placeholder="例：20260513-1" required></label>
+          <label class="required"><span>申請人姓名</span><input id="nameInput" type="text" required></label>
+          <label class="required">
             <span>性別</span>
             <select id="genderInput" required><option value="">請選擇</option><option>男</option><option>女</option></select>
           </label>
-          <label><span>出生年月日</span><input id="birthInput" type="text" placeholder="例：民國56年3月15日" required></label>
-          <label><span>身分證字號</span><input id="nationalIdInput" type="text" maxlength="10" placeholder="例：J123456789" required></label>
-          <label><span>聯絡電話</span><input id="phoneInput" type="tel" required></label>
-          <label><span>個認號碼</span><input id="certificateInput" type="text" placeholder="例：CFS1510171164" required></label>
-          <label class="wide"><span>完整地址</span><input id="addressInput" type="text" required placeholder="例：新竹縣湖口鄉..."></label>
-          <label>
+          <label class="required"><span>出生年月日</span><input id="birthInput" type="date" required></label>
+          <label class="required"><span>身分證字號</span><input id="nationalIdInput" type="text" maxlength="10" pattern="[A-Z][12][0-9]{8}" placeholder="例：J123456789" required></label>
+          <label class="required"><span>聯絡電話</span><input id="phoneInput" type="tel" required></label>
+          <label class="required"><span>個認號碼</span><input id="certificateInput" type="text" value="CFS" placeholder="例：CFS1510171164" required></label>
+          <label class="wide required"><span>完整地址</span><input id="addressInput" type="text" value="新竹縣湖口鄉" required placeholder="例：新竹縣湖口鄉..."></label>
+          <label class="required">
             <span>場所狀況</span>
             <select id="homeStatusInput" required><option>自有住宅</option><option>租賃住宅</option></select>
           </label>
-          <label>
+          <label class="required">
             <span>領取方式</span>
             <select id="receiveMethodInput" required><option>自行領取</option><option>到府安裝</option></select>
           </label>
           <label><span>安裝位置</span><input id="installLocationInput" type="text" placeholder="例：客廳"></label>
-          <label><span>受理人員</span><select id="handlerInput" required></select></label>
+          <label class="required"><span>受理人員</span><select id="handlerInput" required></select></label>
           <label>
             <span>狀態</span>
             <select id="recordStatusInput"><option>未簽收</option><option>已簽收</option></select>

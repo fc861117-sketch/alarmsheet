@@ -378,6 +378,11 @@ label span {
   font-weight: 700;
 }
 
+label.required span::after {
+  content: " *";
+  color: var(--danger);
+}
+
 input,
 select,
 textarea {

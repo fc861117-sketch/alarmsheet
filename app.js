@@ -345,6 +345,17 @@ function formatDate(value) {
   return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString("zh-TW");
 }
 
+function toDateInputValue(value) {
+  if (!value) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const match = String(value).match(/民國\s*(\d{1,3})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/);
+  if (!match) return "";
+  const year = Number(match[1]) + 1911;
+  const month = String(match[2]).padStart(2, "0");
+  const day = String(match[3]).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function normalizeText(value) {
   return String(value || "").trim();
 }
@@ -590,11 +601,11 @@ function openForm(record = null) {
   els.serialInput.value = record?.serial || nextSerial();
   els.nameInput.value = record?.name || "";
   els.genderInput.value = record?.gender || "";
-  els.birthInput.value = record?.birth || "";
+  els.birthInput.value = toDateInputValue(record?.birth);
   els.nationalIdInput.value = record?.nationalId || "";
   els.phoneInput.value = record?.phone || "";
-  els.certificateInput.value = record?.certificateNo || "";
-  els.addressInput.value = record?.address || "";
+  els.certificateInput.value = record?.certificateNo || "CFS";
+  els.addressInput.value = record?.address || "新竹縣湖口鄉";
   els.homeStatusInput.value = record?.homeStatus || "自有住宅";
   els.receiveMethodInput.value = record?.receiveMethod || "自行領取";
   els.installLocationInput.value = record?.installLocation || "";
@@ -612,6 +623,8 @@ async function saveForm() {
   const housingType = selectedValues("housingType")[0] || "";
   if (!personTypes.length) return toast("請至少選一項人員類別");
   if (!housingType) return toast("請選一項住宅類別");
+  const nationalId = normalizeText(els.nationalIdInput.value).toUpperCase();
+  if (!/^[A-Z][12][0-9]{8}$/.test(nationalId)) return toast("身分證字號格式錯誤，例：J123456789");
 
   const now = new Date().toISOString();
   const record = {
@@ -621,7 +634,7 @@ async function saveForm() {
     name: normalizeText(els.nameInput.value),
     gender: els.genderInput.value,
     birth: normalizeText(els.birthInput.value),
-    nationalId: normalizeText(els.nationalIdInput.value).toUpperCase(),
+    nationalId,
     phone: normalizeText(els.phoneInput.value),
     certificateNo: normalizeText(els.certificateInput.value),
     address: normalizeText(els.addressInput.value),
@@ -841,6 +854,9 @@ els.recordDialog.addEventListener("cancel", (event) => {
   cancelForm();
 });
 els.searchInput.addEventListener("input", renderRecords);
+els.nationalIdInput.addEventListener("input", () => {
+  els.nationalIdInput.value = els.nationalIdInput.value.toUpperCase();
+});
 els.statusFilter.addEventListener("change", renderRecords);
 els.handlerFilter.addEventListener("input", renderRecords);
 els.printMode.addEventListener("change", renderPrint);
