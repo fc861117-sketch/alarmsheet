@@ -6,7 +6,7 @@ const AUTH_SESSION_KEY = "fire-alarm-authenticated";
 const AUTH_SESSION_USERNAME_KEY = "fire-alarm-session-username";
 const AUTH_SESSION_HASH_KEY = "fire-alarm-session-hash";
 const EXPECTED_GAS_VERSION = "2026-06-19-8";
-const APP_ASSET_VERSION = "20260619-13";
+const APP_ASSET_VERSION = "20260619-14";
 const CLOUD_API_PARTS = [
   "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mv",
   "cy9BS2Z5Y2J6VGFzRTVvNXIwQ2R3ZVRaYkpKVzJ6bldF",
@@ -88,7 +88,6 @@ const els = {
   exportJsonBtn: document.querySelector("#exportJsonBtn"),
   importJsonInput: document.querySelector("#importJsonInput"),
   importLegacyInput: document.querySelector("#importLegacyInput"),
-  clearBtn: document.querySelector("#clearBtn"),
   seedBtn: document.querySelector("#seedBtn"),
   copySummaryBtn: document.querySelector("#copySummaryBtn"),
   newHandlerInput: document.querySelector("#newHandlerInput"),
@@ -1206,13 +1205,6 @@ els.exportCsvBtn.addEventListener("click", exportCsv);
 els.exportJsonBtn.addEventListener("click", exportJson);
 els.importJsonInput.addEventListener("change", (event) => importJson(event.target.files[0]));
 els.importLegacyInput.addEventListener("change", (event) => importLegacyFile(event.target.files[0]));
-els.clearBtn.addEventListener("click", () => {
-  if (!confirm("確定清除全部本機資料？請先確認已完成備份。")) return;
-  state.records = [];
-  saveRecords();
-  render();
-  toast("本機資料已清除");
-});
 els.seedBtn.addEventListener("click", seedRecords);
 els.closeSampleBtn.addEventListener("click", () => els.sampleDialog.close());
 els.sampleDialog.addEventListener("cancel", (event) => {
