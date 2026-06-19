@@ -40,6 +40,10 @@
 
 若其他裝置無法用同一組帳號密碼登入，請確認 Apps Script 已貼上最新版 `APPS_SCRIPT_CODE.gs`，並且已重新部署 Web App。
 
+若帳號是在早期本機版設定，請先用原本那台裝置開啟最新版網站一次。系統會自動把本機帳號同步到 GAS，之後其他裝置即可用同一組登入。
+
+忘記密碼或想重新設定時，請在 Apps Script 專案設定的 Script Properties 刪除 `sharedUsername` 與 `sharedPasswordHash`，再重新開網站設定。
+
 ## GitHub Pages
 
 此專案是靜態網頁，可放到 GitHub Pages。

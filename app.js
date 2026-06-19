@@ -182,8 +182,14 @@ async function initializeCloud() {
     const result = await cloudGet("meta");
     state.cloudReady = true;
     state.cloudSetupRequired = !result.hasCredentials;
+
+    if (state.cloudSetupRequired) {
+      await migrateLocalCredentialsToCloud();
+    }
+
     updateAuthMode();
     if (isAuthenticated()) {
+      restoreSessionAuthFromLocal();
       setAuthenticated(true);
       await loadCloudData();
     } else {
@@ -196,6 +202,27 @@ async function initializeCloud() {
     setAuthenticated(false);
     toast("無法連線雲端資料，請稍後再試");
   }
+}
+
+async function migrateLocalCredentialsToCloud() {
+  const username = localStorage.getItem(AUTH_USERNAME_KEY) || "";
+  const passwordHash = localStorage.getItem(AUTH_HASH_KEY) || "";
+  if (!username || !passwordHash) return;
+  const result = await cloudGet("setup", { username, passwordHash });
+  if (result.ok) {
+    state.cloudSetupRequired = false;
+    toast("已將本機帳號同步到雲端");
+  }
+}
+
+function restoreSessionAuthFromLocal() {
+  const session = sessionAuthPayload();
+  if (session.username && session.passwordHash) return;
+  const username = localStorage.getItem(AUTH_USERNAME_KEY) || "";
+  const passwordHash = localStorage.getItem(AUTH_HASH_KEY) || "";
+  if (!username || !passwordHash) return;
+  sessionStorage.setItem(AUTH_SESSION_USERNAME_KEY, username);
+  sessionStorage.setItem(AUTH_SESSION_HASH_KEY, passwordHash);
 }
 
 function startCloudSync() {

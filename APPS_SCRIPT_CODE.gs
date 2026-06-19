@@ -1,5 +1,5 @@
 // 湖口分隊住警器紀錄系統 Google Apps Script
-// Version: 2026-06-19-2
+// Version: 2026-06-19-3
 // 說明：支援中文欄位、共用帳號登入、Google Sheet 雲端資料同步。
 
 const SPREADSHEET_ID = "";
