@@ -911,6 +911,10 @@ td {
   text-align: center;
 }
 
+.form-print-mount {
+  display: none;
+}
+
 @media (max-width: 980px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -1039,12 +1043,17 @@ td {
     display: block !important;
   }
 
-  body.form-printing #applicationPrint {
+  body.form-printing .app-shell,
+  body.form-printing .sample-dialog {
+    display: none !important;
+  }
+
+  body.form-printing .form-print-mount {
     display: block !important;
   }
 
-  body.form-printing #listPrint {
-    display: none !important;
+  body.form-printing .form-print-mount .print-sheet {
+    display: block !important;
   }
 
   .print-sheet {
