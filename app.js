@@ -6,7 +6,7 @@ const AUTH_SESSION_KEY = "fire-alarm-authenticated";
 const AUTH_SESSION_USERNAME_KEY = "fire-alarm-session-username";
 const AUTH_SESSION_HASH_KEY = "fire-alarm-session-hash";
 const EXPECTED_GAS_VERSION = "2026-06-19-8";
-const APP_ASSET_VERSION = "20260620-8";
+const APP_ASSET_VERSION = "20260620-9";
 const CLOUD_API_PARTS = [
   "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mv",
   "cy9BS2Z5Y2J6VGFzRTVvNXIwQ2R3ZVRaYkpKVzJ6bldF",
@@ -1048,7 +1048,8 @@ function printCurrentForm() {
   els.applicationPrint.hidden = false;
   els.listPrint.hidden = true;
   els.applicationPrint.innerHTML = applicationFormMarkup(record);
-  window.print();
+  document.body.classList.add("form-printing");
+  requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
 }
 
 async function addHandler() {
@@ -1427,7 +1428,7 @@ els.printSampleBtn.addEventListener("click", () => {
   document.body.classList.add("sample-printing");
   window.print();
 });
-window.addEventListener("afterprint", () => document.body.classList.remove("sample-printing"));
+window.addEventListener("afterprint", () => document.body.classList.remove("sample-printing", "form-printing"));
 window.addEventListener("focus", () => {
   if (isAuthenticated()) loadCloudData({ silent: true });
 });

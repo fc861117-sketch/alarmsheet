@@ -1039,6 +1039,14 @@ td {
     display: block !important;
   }
 
+  body.form-printing #applicationPrint {
+    display: block !important;
+  }
+
+  body.form-printing #listPrint {
+    display: none !important;
+  }
+
   .print-sheet {
     border: 0;
     padding: 0;
