@@ -6,7 +6,7 @@ const AUTH_SESSION_KEY = "fire-alarm-authenticated";
 const AUTH_SESSION_USERNAME_KEY = "fire-alarm-session-username";
 const AUTH_SESSION_HASH_KEY = "fire-alarm-session-hash";
 const EXPECTED_GAS_VERSION = "2026-06-19-8";
-const APP_ASSET_VERSION = "20260620-11";
+const APP_ASSET_VERSION = "20260620-12";
 const CLOUD_API_PARTS = [
   "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mv",
   "cy9BS2Z5Y2J6VGFzRTVvNXIwQ2R3ZVRaYkpKVzJ6bldF",
@@ -893,14 +893,14 @@ function checkboxLine(values, options) {
 function checkboxItems(values, options) {
   return options.map((option) => {
     const checked = values.includes(option);
-    return `<span><i class="print-check${checked ? " checked" : ""}" aria-hidden="true"></i>${escapeHtml(option)}</span>`;
+    return `<span><b class="print-mark" aria-hidden="true">${checked ? "■" : "□"}</b>${escapeHtml(option)}</span>`;
   }).join("");
 }
 
 function checkStack(value, options) {
   return options.map((option) => {
     const checked = value === option;
-    return `<div><i class="print-check${checked ? " checked" : ""}" aria-hidden="true"></i>${escapeHtml(option)}</div>`;
+    return `<div><b class="print-mark" aria-hidden="true">${checked ? "■" : "□"}</b>${escapeHtml(option)}</div>`;
   }).join("");
 }
 

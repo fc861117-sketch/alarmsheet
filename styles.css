@@ -879,18 +879,16 @@ td {
   vertical-align: top;
 }
 
-.print-check {
+.print-mark {
   display: inline-block;
-  width: 11px;
-  height: 11px;
-  border: 1.4px solid #000;
-  margin-right: 4px;
-  vertical-align: -1px;
-  box-sizing: border-box;
-}
-
-.print-check.checked {
-  background: #000;
+  width: 14px;
+  margin-right: 3px;
+  color: #000;
+  font-family: "Times New Roman", "Microsoft JhengHei", serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  vertical-align: 0;
 }
 
 .footer-cell {
@@ -1167,10 +1165,10 @@ td {
     margin-bottom: 0.5mm;
   }
 
-  .print-check {
-    width: 8.5px;
-    height: 8.5px;
-    margin-right: 2.5px;
+  .print-mark {
+    width: 11px;
+    margin-right: 2px;
+    font-size: 9pt;
   }
 
   body.sample-printing .app-shell {
