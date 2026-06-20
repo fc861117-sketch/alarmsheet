@@ -6,7 +6,7 @@ const AUTH_SESSION_KEY = "fire-alarm-authenticated";
 const AUTH_SESSION_USERNAME_KEY = "fire-alarm-session-username";
 const AUTH_SESSION_HASH_KEY = "fire-alarm-session-hash";
 const EXPECTED_GAS_VERSION = "2026-06-19-8";
-const APP_ASSET_VERSION = "20260620-9";
+const APP_ASSET_VERSION = "20260620-10";
 const CLOUD_API_PARTS = [
   "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mv",
   "cy9BS2Z5Y2J6VGFzRTVvNXIwQ2R3ZVRaYkpKVzJ6bldF",
@@ -432,7 +432,7 @@ function migrateRecords(records) {
       gender: normalizeGender(record.gender || record.sex || record["性別"]) || deriveGenderFromNationalId(nationalId),
       birth: record.birth || record.birthDate || "",
       nationalId,
-      phone: record.phone || "",
+      phone: normalizePhone(record.phone || record["聯絡電話"]),
       address: record.address || "",
       homeStatus: normalizeOptionValue(record.homeStatus, ["自有住宅", "租賃住宅"], "自有住宅"),
       receiveMethod: normalizeOptionValue(record.receiveMethod, ["自行領取", "到府安裝"], "自行領取"),
@@ -549,6 +549,16 @@ function updateBirthFromRoc(options = {}) {
 
 function normalizeText(value) {
   return String(value || "").replace(/^\uFEFF/, "").trim();
+}
+
+function normalizePhone(value) {
+  const text = normalizeText(value);
+  if (!text || text.startsWith("0") || text.startsWith("+")) return text;
+  const digits = text.replace(/\D/g, "");
+  if ((digits.length === 8 || digits.length === 9) && /^[2-9]/.test(digits)) {
+    return `0${text}`;
+  }
+  return text;
 }
 
 function normalizeGender(value) {
@@ -903,7 +913,7 @@ function openForm(record = null) {
   setSelectValue(els.genderInput, normalizeGender(record?.gender) || deriveGenderFromNationalId(record?.nationalId));
   setBirthFromDate(record?.birth);
   els.nationalIdInput.value = record?.nationalId || "";
-  els.phoneInput.value = record?.phone || "";
+  els.phoneInput.value = normalizePhone(record?.phone);
   els.certificateInput.value = record?.certificateNo || "CFS";
   els.addressInput.value = record?.address || "新竹縣湖口鄉";
   setSelectValue(els.homeStatusInput, normalizeOptionValue(record?.homeStatus, ["自有住宅", "租賃住宅"], "自有住宅"));
@@ -997,7 +1007,7 @@ function buildRecordFromForm() {
     gender: els.genderInput.value,
     birth,
     nationalId,
-    phone: normalizeText(els.phoneInput.value),
+    phone: normalizePhone(els.phoneInput.value),
     certificateNo,
     address,
     homeStatus: els.homeStatusInput.value,
@@ -1234,7 +1244,7 @@ function legacyRowToRecord(headers, row) {
     gender: normalizeGender(get("性別")) || deriveGenderFromNationalId(nationalId),
     birth: toDateInputValue(get("出生年月日")),
     nationalId,
-    phone: get("申請人電話", "聯絡電話", "連絡電話"),
+    phone: normalizePhone(get("申請人電話", "聯絡電話", "連絡電話")),
     address: get("申請人地址", "完整地址", "地址") || "新竹縣湖口鄉",
     homeStatus: get("場所狀況") || "自有住宅",
     receiveMethod: methodParts.receiveMethod,

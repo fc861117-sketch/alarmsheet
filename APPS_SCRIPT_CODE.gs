@@ -184,6 +184,7 @@ function saveRecord(record) {
   const values = sheet.getDataRange().getValues();
   const row = APPLICATION_FIELDS.map((key) => {
     const value = record[key];
+    if (key === "phone") return normalizePhone(value);
     return Array.isArray(value) ? value.join("、") : (value || "");
   });
   const idColumn = 1;
@@ -280,7 +281,24 @@ function formatSheet(sheet, columnCount) {
     .setWrap(false)
     .setHorizontalAlignment("center");
   sheet.getDataRange().setVerticalAlignment("middle").setWrap(false);
+  setTextFormat(sheet, ["身分證字號", "聯絡電話", "個認號碼"]);
   sheet.autoResizeColumns(1, columnCount);
+}
+
+function setTextFormat(sheet, headers) {
+  const sheetHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  headers.forEach(function(header) {
+    const index = sheetHeaders.indexOf(header);
+    if (index >= 0) sheet.getRange(1, index + 1, sheet.getMaxRows(), 1).setNumberFormat("@");
+  });
+}
+
+function normalizePhone(value) {
+  const text = String(value || "").trim();
+  if (!text || text.indexOf("0") === 0 || text.indexOf("+") === 0) return text;
+  const digits = text.replace(/\D/g, "");
+  if ((digits.length === 8 || digits.length === 9) && /^[2-9]/.test(digits)) return "0" + text;
+  return text;
 }
 
 function getSheet(name) {
