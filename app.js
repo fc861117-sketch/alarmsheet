@@ -6,7 +6,7 @@ const AUTH_SESSION_KEY = "fire-alarm-authenticated";
 const AUTH_SESSION_USERNAME_KEY = "fire-alarm-session-username";
 const AUTH_SESSION_HASH_KEY = "fire-alarm-session-hash";
 const EXPECTED_GAS_VERSION = "2026-06-19-8";
-const APP_ASSET_VERSION = "20260623-2";
+const APP_ASSET_VERSION = "20260627-1";
 const CLOUD_API_PARTS = [
   "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mv",
   "cy9BS2Z5Y2J6VGFzRTVvNXIwQ2R3ZVRaYkpKVzJ6bldF",
@@ -992,7 +992,6 @@ function buildRecordFromForm() {
   }
   const duplicate = findDuplicateApplication({
     id: els.recordId.value,
-    nationalId,
     address,
     certificateNo,
   });
@@ -1026,7 +1025,6 @@ function buildRecordFromForm() {
 
 function findDuplicateApplication(current) {
   const currentId = normalizeText(current.id);
-  const currentNationalId = normalizeForDuplicate(current.nationalId);
   const currentAddress = normalizeForDuplicate(current.address);
   const currentCertificate = normalizeForDuplicate(current.certificateNo);
   return state.records
@@ -1034,15 +1032,10 @@ function findDuplicateApplication(current) {
     .map((record) => ({
       id: record.id,
       name: record.name || record.serial || "未命名資料",
-      nationalId: normalizeForDuplicate(record.nationalId),
       address: normalizeForDuplicate(record.address),
       certificateNo: normalizeForDuplicate(record.certificateNo),
     }))
     .find((record) => {
-      if (currentNationalId && record.nationalId === currentNationalId) {
-        record.field = "身分證字號";
-        return true;
-      }
       if (currentAddress && record.address === currentAddress) {
         record.field = "地址";
         return true;
